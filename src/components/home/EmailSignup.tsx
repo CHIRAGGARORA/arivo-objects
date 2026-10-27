@@ -5,19 +5,39 @@ import { Container } from "@/components/ui/Container";
 import { siteConfig } from "@/lib/siteConfig";
 
 /**
- * Frontend-only signup form. Submission is intercepted and does not send
- * data anywhere yet. See README.md, "Connecting email signup" for how to
- * wire this to a real provider (e.g. Mailchimp, Klaviyo, or a simple API
- * route) without changing this component's markup.
+ * Newsletter signup. Stores a consented address via /api/newsletter; nothing
+ * is emailed automatically.
  */
 export function EmailSignup() {
-  const [status, setStatus] = useState<"idle" | "submitted">("idle");
+  const [status, setStatus] = useState<"idle" | "busy" | "submitted">("idle");
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: replace with a real POST to /api/subscribe once an email
-    // provider is connected.
-    setStatus("submitted");
+    setError(null);
+    const f = new FormData(e.currentTarget);
+    setStatus("busy");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: f.get("email"),
+          consent: f.get("consent") === "on",
+          website: f.get("website") || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) return setStatus("submitted");
+      setError(
+        res.status === 400
+          ? (Object.values(data.fields ?? {})[0] as string) ?? "Please check your email address."
+          : data.message ?? "Sign-up isn't available right now. Please try again later."
+      );
+    } catch {
+      setError("Network error — please try again.");
+    }
+    setStatus("idle");
   }
 
   return (
@@ -27,34 +47,41 @@ export function EmailSignup() {
         <p className="mt-3 text-sm text-charcoal/70">
           Occasional notes on new objects, restocks and the studio.
         </p>
-        {status === "idle" ? (
-          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <label htmlFor="email" className="sr-only">
-              Email address
+        {status !== "submitted" ? (
+          <form onSubmit={handleSubmit} noValidate className="mt-8">
+            <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+              <label htmlFor="signup-website">Website</label>
+              <input id="signup-website" name="website" tabIndex={-1} autoComplete="off" />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="Email address"
+                className="flex-1 border border-sand bg-transparent px-4 py-3 text-sm placeholder:text-charcoal/40 focus:border-charcoal"
+              />
+              <button
+                type="submit"
+                disabled={status === "busy"}
+                className="border border-charcoal px-6 py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory disabled:opacity-50"
+              >
+                {status === "busy" ? "Signing up…" : "Sign up"}
+              </button>
+            </div>
+            <label className="mt-3 flex items-start justify-center gap-2 text-left text-xs text-charcoal/65">
+              <input type="checkbox" name="consent" required className="mt-0.5" />
+              <span>I&rsquo;d like to receive occasional emails from {siteConfig.brandName}. Unsubscribe any time.</span>
             </label>
-            <input
-              id="email"
-              type="email"
-              required
-              placeholder="Email address"
-              className="flex-1 border border-sand bg-transparent px-4 py-3 text-sm placeholder:text-charcoal/40 focus:border-charcoal"
-            />
-            <button
-              type="submit"
-              className="border border-charcoal px-6 py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory"
-            >
-              Sign up
-            </button>
+            {error && <p role="alert" className="mt-3 text-sm text-terracotta">{error}</p>}
           </form>
         ) : (
-          <p className="mt-8 text-sm">
-            Thank you. Our mailing list isn&rsquo;t open yet, so your email was not
-            saved — follow{" "}
-            <a href={siteConfig.socials.instagram ?? "#"} className="underline">
-              @{siteConfig.instagramHandle}
-            </a>{" "}
-            on Instagram for updates.
-          </p>
+          <p className="mt-8 text-sm" role="status">Thank you — you&rsquo;re on the list.</p>
         )}
       </Container>
     </section>

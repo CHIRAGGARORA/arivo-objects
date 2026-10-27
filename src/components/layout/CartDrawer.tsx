@@ -5,9 +5,10 @@ import { formatPrice } from "@/lib/products";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 import { isPlaceholderKey } from "@/lib/placeholderLabels";
 import Image from "next/image";
+import { CheckoutButton } from "@/components/cart/CheckoutButton";
 
 export function CartDrawer() {
-  const { lines, isOpen, closeCart, removeItem, updateQuantity, subtotal } = useCart();
+  const { lines, isOpen, closeCart, removeItem, updateQuantity, subtotal, isSellable } = useCart();
 
   return (
     <>
@@ -68,6 +69,9 @@ export function CartDrawer() {
                     <div>
                       <p className="text-sm font-medium">{line.name}</p>
                       <p className="text-xs text-charcoal/60">{line.variantLabel}</p>
+                      {!isSellable(line.productSlug, line.variantId) && (
+                        <p className="mt-1 text-xs text-terracotta">Not yet available to order online</p>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center border border-sand">
@@ -111,16 +115,7 @@ export function CartDrawer() {
             <span>Subtotal</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
-          <button
-            disabled
-            className="w-full bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:opacity-40"
-            title="Online checkout is not yet live"
-          >
-            Online checkout coming soon
-          </button>
-          <p className="mt-3 text-center text-xs text-charcoal/50">
-            Payment is not yet available. This cart is a preview of the shopping experience.
-          </p>
+          <CheckoutButton onNavigate={closeCart} />
         </div>
       </aside>
     </>

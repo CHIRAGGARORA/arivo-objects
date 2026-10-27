@@ -51,6 +51,7 @@ export const products: Product[] = [
         label: "Black Marble",
         colorSwatch: "#2B2A28",
         inStock: null,
+        sellable: false, // [OWNER_APPROVAL_REQUIRED]
         images: [
           {
             src: "/products/small-oval-marble-tray/black-marble/main.jpg",
@@ -71,6 +72,7 @@ export const products: Product[] = [
         label: "Terracotta Marble",
         colorSwatch: "#B5654A",
         inStock: null,
+        sellable: false, // [OWNER_APPROVAL_REQUIRED]
         images: [
           {
             src: "/products/small-oval-marble-tray/terracotta-marble/main.jpg",
@@ -91,6 +93,7 @@ export const products: Product[] = [
         label: "Ochre Marble",
         colorSwatch: "#C89B4A",
         inStock: null,
+        sellable: false, // [OWNER_APPROVAL_REQUIRED]
         images: [
           {
             src: "/products/small-oval-marble-tray/ochre-marble/main.jpg",
@@ -139,6 +142,7 @@ export const products: Product[] = [
         label: "Black Marble",
         colorSwatch: "#2B2A28",
         inStock: null,
+        sellable: false, // [OWNER_APPROVAL_REQUIRED]
         images: [
           { src: "placeholder:tray-cloud-black-front", alt: "Large cloud-shaped marble tray, black marble, front view", isPlaceholder: true, role: "main" },
           { src: "placeholder:tray-cloud-black-scale", alt: "Large cloud-shaped marble tray shown at scale on a table", isPlaceholder: true, role: "gallery" },
@@ -185,6 +189,7 @@ export const products: Product[] = [
         label: "Black Marble",
         colorSwatch: "#2B2A28",
         inStock: null,
+        sellable: false, // [OWNER_APPROVAL_REQUIRED]
         images: [
           { src: "placeholder:candle-flower-black-unlit", alt: "Flower-engraved Jesmonite candle, black marble, unlit", isPlaceholder: true, role: "main" },
           { src: "placeholder:candle-flower-black-lit", alt: "Flower-engraved Jesmonite candle, black marble, lit", isPlaceholder: true, role: "gallery" },

@@ -51,7 +51,9 @@ src/
     products.ts             ⭐ ALL product data — names, prices, copy, images
     journal.ts               ⭐ ALL journal article content
     siteConfig.ts             ⭐ Business info placeholders (GST, email, phone, etc.)
-    cart-context.tsx         Frontend-only cart (React state, no backend)
+    cart-context.tsx         Browser cart (display only; server re-prices)
+    server/                  Server-only: db, orders, payments, email, shipping
+    shipping-specs.ts         ⭐ Packed weight/dimensions sent to Shiprocket
     seo.ts                    Metadata helper
     placeholderLabels.ts      Labels shown on placeholder image blocks
   types/
@@ -102,22 +104,27 @@ it's what the whole site reads from for contact info and structured data.
 
 ---
 
-## 4. What's a working demo vs. what's placeholder
+## 4. What works today
 
 | Feature | Status |
 |---|---|
-| Browsing, product pages, journal, static pages | Fully working |
-| Cart (add/remove/change quantity/subtotal) | Fully working, **frontend-only** — resets on page reload, no backend |
-| Checkout | Intentionally disabled — button reads "Online checkout coming soon" |
-| Product photography | Neutral labeled placeholder blocks — see section 3 |
-| Instagram feed | Static placeholder grid, **not live**, no mock posts — see section 6 |
-| Email signup | UI works, does not actually send data anywhere yet |
-| Contact form | UI works, does not actually send data anywhere yet |
-| GST / business info | `null` placeholders throughout — see `siteConfig.ts` |
+| Browsing, product pages, journal, static pages | Working |
+| Cart | Saved in the browser; server re-prices everything at checkout |
+| Checkout (Razorpay) | Built and tested; enabled only once Razorpay + database env vars are set, and only for variants approved in `products.ts` with stock in `/admin` |
+| Orders, emails, Shiprocket | Durable post-payment pipeline with retries — see `docs/LAUNCH.md` |
+| Contact form / newsletter | Saved to Postgres; contact notifications emailed via Resend |
+| Admin | `/admin` (password from `ADMIN_PASSWORD`) |
+| Product photography / dimensions | Some real photos; dimensions and packed shipping specs still pending |
 
-No fake reviews, ratings, stock counts, testimonials, or invented business
-information (GSTIN, phone, address, bank details, burn times, dimensions)
-exist anywhere in this codebase, per your original brief.
+**Setup and launch steps: [`docs/LAUNCH.md`](docs/LAUNCH.md).**
+
+### Tests
+
+```bash
+# needs a disposable Postgres database whose name contains "test"
+TEST_DATABASE_URL=postgres://localhost/arivo_test npm test
+npm run lint && npm run typecheck && npm run build
+```
 
 ---
 
@@ -150,25 +157,6 @@ with a real feed once you have an Instagram Business account connected to a
 Meta Developer app (for the Instagram Graph API), or install a feed
 service (e.g. SnapWidget, Behold) and embed its widget in the same
 component. Set `instagramHandle` and `instagramUrl` in `siteConfig.ts` first.
-
-### Email signup
-`src/components/home/EmailSignup.tsx` currently intercepts the form submit
-locally. Replace the `handleSubmit` TODO with a `fetch()` call to either:
-- a Next.js API route (`src/app/api/subscribe/route.ts`) that forwards to
-  your provider, or
-- your provider's own client-side embed (Mailchimp, Klaviyo, etc.)
-
-### Payments (Razorpay)
-Do **not** wire this until you have a business bank account + Razorpay
-account. When ready:
-1. Add `NEXT_PUBLIC_RAZORPAY_KEY_ID` (public) and `RAZORPAY_KEY_SECRET`
-   (server-only, never `NEXT_PUBLIC_`) to `.env.local`.
-2. Build a server-side API route to create an order (`/api/checkout/create`)
-   and one to verify payment signatures (`/api/checkout/verify`) — keep
-   these separate, as per standard Razorpay integration.
-3. Replace the disabled "Online checkout coming soon" buttons in
-   `CartDrawer.tsx` and `cart/page.tsx` with the real Razorpay checkout flow.
-4. Add a webhook handler for asynchronous payment status updates.
 
 ### GST / invoicing
 Fill in `gstin`, `legalName`, `businessAddress` in `siteConfig.ts` only once

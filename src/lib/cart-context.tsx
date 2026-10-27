@@ -4,31 +4,23 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   ReactNode,
 } from "react";
 import { Product } from "@/types/product";
-import { getMainImage } from "./products";
+import { getMainImage, products } from "./products";
 
 /**
  * cart-context.tsx
  * ---------------------------------------------------------------------------
- * FRONTEND-ONLY DEMO CART.
+ * Browser cart. Lines are saved to localStorage so the cart survives a
+ * reload or a trip to the payment page, and are refreshed from products.ts
+ * on load (so a stale saved price or a removed product never lingers).
  *
- * This context stores cart state in memory (React state) for the current
- * browser session only. It does NOT:
- *   - persist across page reloads (by design — no localStorage dependency
- *     baked in, keeping this simple to reason about while wiring real
- *     commerce)
- *   - talk to a payment gateway
- *   - reserve inventory
- *
- * WHEN REAL COMMERCE IS ADDED (Shopify or a custom backend):
- * Replace the internals of `addItem`, `removeItem`, `updateQuantity` with
- * calls to the real cart API (e.g. Shopify's Storefront API cart mutations),
- * and keep the same context shape so components using `useCart()` do not
- * need to change.
+ * Prices here are for DISPLAY ONLY. The server re-prices every line from
+ * products.ts at checkout and never trusts anything the browser sends.
  *
  * `addItem` (Add to Cart) sums quantity into an existing line.
  * `setLineQuantity` (used by Buy Now) instead takes the larger of the
@@ -62,15 +54,85 @@ interface CartContextValue {
   setLineQuantity: (product: Product, variantId: string, quantity: number) => void;
   removeItem: (productSlug: string, variantId: string) => void;
   updateQuantity: (productSlug: string, variantId: string, quantity: number) => void;
+  clearCart: () => void;
   subtotal: number;
   itemCount: number;
+  /** Server says checkout is configured (payment + database). */
+  checkoutEnabled: boolean;
+  /** Every line in the cart can currently be ordered online. */
+  allLinesSellable: boolean;
+  /** Whether a variant can be ordered online (decided by the server). */
+  isSellable: (productSlug: string, variantId: string) => boolean;
+}
+
+const STORAGE_KEY = "arivo-cart-v1";
+export const MAX_QTY_PER_LINE = 10;
+
+
+/** Rebuild saved lines from the current catalogue, dropping anything unknown. */
+function refreshLines(saved: unknown): CartLine[] {
+  if (!Array.isArray(saved)) return [];
+  const out: CartLine[] = [];
+  for (const raw of saved) {
+    const l = raw as Partial<CartLine>;
+    const product = products.find((p) => p.slug === l.productSlug);
+    const variant = product?.variants.find((v) => v.id === l.variantId);
+    const qty = Math.floor(Number(l.quantity));
+    if (!product || !variant || !(qty >= 1)) continue;
+    out.push({
+      productSlug: product.slug,
+      variantId: variant.id,
+      name: product.name,
+      variantLabel: variant.label,
+      price: product.price,
+      quantity: Math.min(qty, MAX_QTY_PER_LINE),
+      image: getMainImage(variant).src,
+    });
+  }
+  return out;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({
+  children,
+  checkoutEnabled = false,
+  sellableVariants = [],
+}: {
+  children: ReactNode;
+  checkoutEnabled?: boolean;
+  /** "slug/variantId" keys the server allows to be ordered. */
+  sellableVariants?: string[];
+}) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  // false until the saved cart has been restored; nothing is written to
+  // storage before then, so a fast navigation can't overwrite it with [].
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore once on mount, then save on every change. Storage can be
+  // unavailable (private mode, blocked site data) — the cart still works,
+  // it just won't persist.
+  useEffect(() => {
+    let restored: CartLine[] = [];
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) restored = refreshLines(JSON.parse(saved));
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from browser storage
+    setLines((current) => (current.length ? current : restored));
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+    } catch {
+      /* ignore */
+    }
+  }, [lines, hydrated]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
@@ -87,7 +149,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (existing) {
           return prev.map((l) =>
             l.productSlug === product.slug && l.variantId === variantId
-              ? { ...l, quantity: l.quantity + quantity }
+              ? { ...l, quantity: Math.min(l.quantity + quantity, MAX_QTY_PER_LINE) }
               : l
           );
         }
@@ -99,7 +161,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             name: product.name,
             variantLabel: variant.label,
             price: product.price,
-            quantity,
+            quantity: Math.min(quantity, MAX_QTY_PER_LINE),
             image: getMainImage(variant).src,
           },
         ];
@@ -126,7 +188,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const next = [...prev];
           next[existingIndex] = {
             ...next[existingIndex],
-            quantity: Math.max(next[existingIndex].quantity, quantity),
+            quantity: Math.min(Math.max(next[existingIndex].quantity, quantity), MAX_QTY_PER_LINE),
           };
           return next;
         }
@@ -138,7 +200,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             name: product.name,
             variantLabel: variant.label,
             price: product.price,
-            quantity,
+            quantity: Math.min(quantity, MAX_QTY_PER_LINE),
             image: getMainImage(variant).src,
           },
         ];
@@ -162,7 +224,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setLines((prev) =>
         prev.map((l) =>
           l.productSlug === productSlug && l.variantId === variantId
-            ? { ...l, quantity }
+            ? { ...l, quantity: Math.min(quantity, MAX_QTY_PER_LINE) }
             : l
         )
       );
@@ -180,6 +242,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [lines]
   );
 
+  const clearCart = useCallback(() => setLines([]), []);
+  const sellableSet = useMemo(() => new Set(sellableVariants), [sellableVariants]);
+  const isSellable = useCallback(
+    (productSlug: string, variantId: string) => sellableSet.has(`${productSlug}/${variantId}`),
+    [sellableSet]
+  );
+  const allLinesSellable = useMemo(
+    () => lines.every((l) => isSellable(l.productSlug, l.variantId)),
+    [lines, isSellable]
+  );
+
   const value: CartContextValue = {
     lines,
     isOpen,
@@ -189,8 +262,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLineQuantity,
     removeItem,
     updateQuantity,
+    clearCart,
     subtotal,
     itemCount,
+    checkoutEnabled,
+    allLinesSellable,
+    isSellable,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -34,6 +34,12 @@ export interface SiteConfig {
   currencySymbol: string;
   paymentProvider: PaymentProvider;
   shippingProvider: ShippingProvider;
+  /**
+   * Flat shipping fee charged per order, in rupees. null = not decided yet:
+   * checkout is refused in production until this is set (0 is a valid,
+   * deliberate "free shipping" choice).
+   */
+  shippingFeeInr: number | null;
   socials: {
     instagram: string | null;
   };
@@ -54,6 +60,7 @@ export const siteConfig: SiteConfig = {
   currencySymbol: "₹",
   paymentProvider: null, // [GATEWAY_PENDING] — planned: razorpay
   shippingProvider: null, // [SHIPPING_PROVIDER_PENDING]
+  shippingFeeInr: null, // [SHIPPING_FEE_PENDING] — owner to decide
   socials: {
     instagram: "https://www.instagram.com/arivoobjects/",
   },

@@ -15,6 +15,12 @@ export interface ProductVariant {
   images: ProductImage[];
   /** null until confirmed in stock by the maker */
   inStock: boolean | null;
+  /**
+   * Whether this variant may be bought online. Keep false until the owner
+   * explicitly approves selling it. The server also requires a stock row in
+   * the database before accepting an order.
+   */
+  sellable: boolean;
 }
 
 export type ProductCategory = "tray" | "candle";

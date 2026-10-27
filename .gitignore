@@ -1,9 +1,16 @@
 node_modules
 .next
 out
-.env.local
-.env*.local
 .DS_Store
 npm-debug.log*
 *.tsbuildinfo
 .vercel
+
+# Secrets — never commit. Only the *.example template is tracked.
+.env
+.env.*
+!.env.local.example
+*.pem
+*.key
+*.p12
+*.pfx

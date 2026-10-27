@@ -7,6 +7,8 @@ import { CartDrawer } from "@/components/layout/CartDrawer";
 import { CartProvider } from "@/lib/cart-context";
 import { siteConfig } from "@/lib/siteConfig";
 import { SITE_URL } from "@/lib/seo";
+import { checkoutBlockReason } from "@/lib/server/config";
+import { sellableVariantKeys } from "@/lib/server/catalog";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -48,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${fraunces.variable} ${inter.variable}`}>
-        <CartProvider>
+        <CartProvider checkoutEnabled={checkoutBlockReason() === null} sellableVariants={sellableVariantKeys()}>
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-charcoal focus:text-ivory focus:px-4 focus:py-2"

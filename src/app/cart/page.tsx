@@ -7,9 +7,10 @@ import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/products";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 import { isPlaceholderKey } from "@/lib/placeholderLabels";
+import { CheckoutButton } from "@/components/cart/CheckoutButton";
 
 export default function CartPage() {
-  const { lines, removeItem, updateQuantity, subtotal } = useCart();
+  const { lines, removeItem, updateQuantity, subtotal, isSellable } = useCart();
 
   return (
     <div className="py-16 md:py-24">
@@ -45,6 +46,9 @@ export default function CartPage() {
                       <div>
                         <p className="text-sm font-medium">{line.name}</p>
                         <p className="text-xs text-charcoal/60">{line.variantLabel}</p>
+                        {!isSellable(line.productSlug, line.variantId) && (
+                          <p className="mt-1 text-xs text-terracotta">Not yet available to order online</p>
+                        )}
                       </div>
                       <p className="text-sm">{formatPrice(line.price * line.quantity)}</p>
                     </div>
@@ -87,16 +91,9 @@ export default function CartPage() {
               <span>{formatPrice(subtotal)}</span>
             </div>
 
-            <button
-              disabled
-              className="mt-6 w-full bg-charcoal py-4 text-sm tracking-wide text-ivory opacity-40 sm:w-auto sm:px-10"
-              title="Online checkout is not yet live"
-            >
-              Online checkout coming soon
-            </button>
-            <p className="mt-3 text-xs text-charcoal/50">
-              Payment is not yet available. This cart is a preview of the shopping experience.
-            </p>
+            <div className="mt-6 sm:max-w-xs">
+              <CheckoutButton />
+            </div>
           </div>
         )}
       </Container>

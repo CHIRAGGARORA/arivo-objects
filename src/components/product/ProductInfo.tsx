@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product } from "@/types/product";
 import { formatPrice } from "@/lib/products";
-import { useCart } from "@/lib/cart-context";
+import { MAX_QTY_PER_LINE, useCart } from "@/lib/cart-context";
 
 interface ProductInfoProps {
   product: Product;
@@ -17,17 +17,17 @@ interface ProductInfoProps {
 
 export function ProductInfo({ product, variantId, onVariantChange }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
-  const { addItem, setLineQuantity } = useCart();
+  const { addItem, setLineQuantity, checkoutEnabled, isSellable } = useCart();
   const router = useRouter();
 
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
+  const orderable = isSellable(product.slug, variant.id);
 
   function handleBuyNow() {
     // Sets (not adds) the quantity, so pressing Buy Now on something
-    // already in the cart never silently duplicates it — then takes the
-    // person straight to the cart, since checkout isn't live yet.
+    // already in the cart never silently duplicates it.
     setLineQuantity(product, variantId, quantity);
-    router.push("/cart");
+    router.push(checkoutEnabled ? "/checkout" : "/cart");
   }
 
   return (
@@ -79,7 +79,7 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
           <button
             type="button"
             className="px-3 py-2 text-sm"
-            onClick={() => setQuantity((q) => q + 1)}
+            onClick={() => setQuantity((q) => Math.min(MAX_QTY_PER_LINE, q + 1))}
             aria-label="Increase quantity"
           >
             +
@@ -87,8 +87,8 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         </div>
 
         <p className="text-xs text-charcoal/50">
-          {variant.inStock === false
-            ? "Currently unavailable"
+          {!orderable
+            ? "Not yet available to order online"
             : "Availability confirmed at checkout"}
         </p>
       </div>
@@ -97,15 +97,16 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         <button
           type="button"
           onClick={() => addItem(product, variantId, quantity)}
-          className="flex-1 bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90"
+          disabled={!orderable}
+          className="flex-1 bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Add to cart
         </button>
         <button
           type="button"
           onClick={handleBuyNow}
-          className="flex-1 border border-charcoal py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory"
-          title="Online checkout is not yet live"
+          disabled={!orderable}
+          className="flex-1 border border-charcoal py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-charcoal"
         >
           Buy now
         </button>

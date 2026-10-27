@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { Container } from "@/components/ui/Container";
+import { siteConfig } from "@/lib/siteConfig";
 
 /**
  * Frontend-only signup form. Submission is intercepted and does not send
@@ -46,7 +47,14 @@ export function EmailSignup() {
             </button>
           </form>
         ) : (
-          <p className="mt-8 text-sm">Thank you — you&rsquo;re on the list.</p>
+          <p className="mt-8 text-sm">
+            Thank you. Our mailing list isn&rsquo;t open yet, so your email was not
+            saved — follow{" "}
+            <a href={siteConfig.socials.instagram ?? "#"} className="underline">
+              @{siteConfig.instagramHandle}
+            </a>{" "}
+            on Instagram for updates.
+          </p>
         )}
       </Container>
     </section>

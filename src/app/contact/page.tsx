@@ -47,8 +47,12 @@ export default function ContactPage() {
 
         {submitted ? (
           <p className="mt-10 text-sm">
-            Thank you — your message has been recorded in this preview. A real
-            submission handler will be connected once the business email is set up.
+            Thank you. This form isn&rsquo;t connected to our inbox yet, so your
+            message was not sent — please reach us on Instagram at{" "}
+            <a href={siteConfig.socials.instagram ?? "#"} className="underline">
+              @{siteConfig.instagramHandle}
+            </a>{" "}
+            in the meantime.
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="mt-10 space-y-5">

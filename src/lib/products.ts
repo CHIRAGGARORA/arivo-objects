@@ -51,7 +51,7 @@ export const products: Product[] = [
         label: "Black Marble",
         colorSwatch: "#2B2A28",
         inStock: null,
-        sellable: false, // [OWNER_APPROVAL_REQUIRED]
+        sellable: true, // approved by owner for launch (still needs stock in /admin)
         images: [
           {
             src: "/products/small-oval-marble-tray/black-marble/main.jpg",
@@ -72,7 +72,7 @@ export const products: Product[] = [
         label: "Terracotta Marble",
         colorSwatch: "#B5654A",
         inStock: null,
-        sellable: false, // [OWNER_APPROVAL_REQUIRED]
+        sellable: true, // approved by owner for launch (still needs stock in /admin)
         images: [
           {
             src: "/products/small-oval-marble-tray/terracotta-marble/main.jpg",
@@ -93,7 +93,7 @@ export const products: Product[] = [
         label: "Ochre Marble",
         colorSwatch: "#C89B4A",
         inStock: null,
-        sellable: false, // [OWNER_APPROVAL_REQUIRED]
+        sellable: true, // approved by owner for launch (still needs stock in /admin)
         images: [
           {
             src: "/products/small-oval-marble-tray/ochre-marble/main.jpg",
@@ -142,7 +142,7 @@ export const products: Product[] = [
         label: "Black Marble",
         colorSwatch: "#2B2A28",
         inStock: null,
-        sellable: false, // [OWNER_APPROVAL_REQUIRED]
+        sellable: true, // approved by owner for launch (still needs stock in /admin)
         images: [
           {
             src: "/products/large-cloud-marble-tray/black-marble/main.jpg",
@@ -215,7 +215,7 @@ export const products: Product[] = [
         label: "Sandalwood",
         colorSwatch: "#C8A27A",
         inStock: null,
-        sellable: false, // [OWNER_APPROVAL_REQUIRED]
+        sellable: true, // approved by owner for launch (still needs stock in /admin)
         images: [
           {
             src: "/products/scented-candle-jar-pack-of-4/sandalwood/main.jpg",

@@ -211,7 +211,7 @@ function formatOrderDate(d: Date): string {
 export async function createShipmentOrder(input: ShipmentOrderInput): Promise<ShipmentResult> {
   const { pickupLocation } = config.shiprocket();
   if (!shiprocketConfigured() || !pickupLocation) {
-    throw new ShiprocketError("Shiprocket is not configured (API user / pickup location)", false);
+    throw new ShiprocketError("Shiprocket is not set up yet (no API user / pickup location configured), so this order must be shipped manually.", false);
   }
   const pkg = packageFor(input.items);
 

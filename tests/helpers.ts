@@ -41,7 +41,7 @@ export async function resetDb() {
   const c = new pg.Client({ connectionString: DB_URL });
   await c.connect();
   await c.query(`TRUNCATE customers, inventory, orders, order_items, order_tasks, payment_events,
-    newsletter_subscribers, contact_messages, rate_limits RESTART IDENTITY CASCADE`);
+    newsletter_subscribers, contact_messages, rate_limits, refunds RESTART IDENTITY CASCADE`);
   await c.query("DROP TABLE IF EXISTS deployment_guard");
   await c.end();
   await resetPool();
@@ -231,6 +231,16 @@ export function jsonRequest(url: string, body: unknown, headers: Record<string, 
 
 export function paymentSignature(orderId: string, paymentId: string, secret = KEY_SECRET) {
   return createHmac("sha256", secret).update(`${orderId}|${paymentId}`).digest("hex");
+}
+
+export function signedWebhook(body: unknown, eventId = `evt_${randomUUID()}`) {
+  const raw = JSON.stringify(body);
+  const sig = createHmac("sha256", WEBHOOK_SECRET).update(raw).digest("hex");
+  return new Request("https://example.test/api/webhooks/razorpay", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-razorpay-signature": sig, "x-razorpay-event-id": eventId },
+    body: raw,
+  });
 }
 
 export function webhookRequest(event: string, payment: { id: string; order_id: string; error_description?: string }, opts: { eventId?: string; secret?: string } = {}) {

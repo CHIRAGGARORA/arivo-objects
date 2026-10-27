@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/siteConfig";
 
 interface OrderView {
   orderNumber: string;
-  status: "pending" | "paid" | "failed" | "cancelled";
+  status: "pending" | "paid" | "failed" | "cancelled" | "refunded";
   items: { name: string; variantLabel: string; quantity: number; unitPricePaise: number }[];
   subtotalPaise: number;
   couponCode: string | null;
@@ -69,6 +69,7 @@ export function OrderStatus({ token }: { token: string }) {
     pending: "Confirming your payment…",
     failed: "Payment not completed",
     cancelled: "Order not completed",
+    refunded: "Order refunded",
   }[order.status];
 
   return (
@@ -81,8 +82,8 @@ export function OrderStatus({ token }: { token: string }) {
       <div className="mt-5 text-sm leading-relaxed text-charcoal/75">
         {order.status === "paid" && (
           <p>
-            Your payment has been received and your order is confirmed. A confirmation email is on its way. We&rsquo;ll
-            email you again when it ships.
+            Your payment has been received and your order is confirmed. A confirmation email is on its way.
+            Shipping is free, and your order will be dispatched within 48 hours.
           </p>
         )}
         {order.status === "pending" &&
@@ -95,6 +96,12 @@ export function OrderStatus({ token }: { token: string }) {
               again; refresh this page later or contact us.
             </p>
           ))}
+        {order.status === "refunded" && (
+          <p>
+            This order has been refunded in full. Refunds usually reach your account within 5–7 working days,
+            depending on your bank.
+          </p>
+        )}
         {(order.status === "failed" || order.status === "cancelled") && (
           <p>
             We didn&rsquo;t receive a successful payment for this order. If money was deducted from your account,

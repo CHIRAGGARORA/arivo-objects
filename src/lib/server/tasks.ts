@@ -168,7 +168,7 @@ async function run(orderId: string, task: TaskName): Promise<unknown> {
         )
       )[0]?.last_error;
       return sendEmail({
-        ...shippingAlertEmail(orderNumber, reason ?? "Unknown error", ownerEmail()),
+        ...shippingAlertEmail(data, reason ?? "Unknown error", ownerEmail()),
         idempotencyKey: `order-${orderNumber}-shipping-alert`,
       });
     }

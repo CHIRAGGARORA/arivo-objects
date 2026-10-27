@@ -372,6 +372,49 @@ async function markPaid(orderId: string, payment: RazorpayPayment): Promise<Conf
   });
 }
 
+/**
+ * refund.processed webhook. Each refund id is applied once. A full refund
+ * marks the order 'refunded' (pending fulfilment steps then stop, because
+ * they only run for 'paid' orders). Stock is not restored automatically —
+ * the item may already have shipped — so the order is flagged instead.
+ */
+export async function recordRefund(
+  razorpayPaymentId: string,
+  refundId: string,
+  amountPaise: number
+): Promise<"applied" | "duplicate" | "unknown_payment"> {
+  await ensureDatabaseEnvironment();
+  return withTransaction(async (client) => {
+    const order = (
+      await client.query<{ id: string; total_paise: number; refunded_paise: number }>(
+        "SELECT id, total_paise, refunded_paise FROM orders WHERE razorpay_payment_id = $1 FOR UPDATE",
+        [razorpayPaymentId]
+      )
+    ).rows[0];
+    if (!order) return "unknown_payment";
+    const inserted = (
+      await client.query(
+        "INSERT INTO refunds (refund_id, order_id, amount_paise) VALUES ($1, $2, $3) ON CONFLICT (refund_id) DO NOTHING",
+        [refundId, order.id, amountPaise]
+      )
+    ).rowCount;
+    if (!inserted) return "duplicate";
+    const refunded = order.refunded_paise + amountPaise;
+    const full = refunded >= order.total_paise;
+    const note = full
+      ? `Refunded in full (${refundId}). Stock was not restored automatically — add it back in Stock if the item was not shipped.`
+      : `Partial refund ₹${(amountPaise / 100).toFixed(2)} (${refundId}); ₹${(refunded / 100).toFixed(2)} of ₹${(order.total_paise / 100).toFixed(2)} refunded so far.`;
+    await client.query(
+      `UPDATE orders SET refunded_paise = $2, refunded_at = now(),
+              status = CASE WHEN $3 THEN 'refunded' ELSE status END,
+              attention_reason = COALESCE(attention_reason || E'\n', '') || $4, updated_at = now()
+        WHERE id = $1`,
+      [order.id, refunded, full, note]
+    );
+    return "applied";
+  });
+}
+
 /** payment.failed webhook: only moves a still-pending order to failed. */
 export async function markPaymentFailed(razorpayOrderId: string, reason: string): Promise<void> {
   await query(
@@ -396,7 +439,7 @@ export async function cancelStalePendingOrders(): Promise<number> {
 
 export interface PublicOrderView {
   orderNumber: string;
-  status: "pending" | "paid" | "failed" | "cancelled";
+  status: "pending" | "paid" | "failed" | "cancelled" | "refunded";
   items: { name: string; variantLabel: string; quantity: number; unitPricePaise: number }[];
   subtotalPaise: number;
   couponCode: string | null;

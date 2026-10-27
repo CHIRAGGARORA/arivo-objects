@@ -150,10 +150,10 @@ export function customerConfirmationEmail(d: OrderEmailData): Omit<EmailMessage,
 <p>We've received your payment for order <strong>${escapeHtml(d.orderNumber)}</strong>.</p>
 ${itemsTable(d)}
 <p style="margin-top:16px"><strong>Shipping to</strong><br>${escapeHtml(addressText(d.address)).replace(/\n/g, "<br>")}</p>
-<p>We'll email you again when your order is dispatched. You can check its status at any time:<br>
+<p>Shipping is free, and your order will be dispatched within 48 hours. You can check its status at any time:<br>
 <a href="${escapeHtml(d.statusUrl)}">${escapeHtml(d.statusUrl)}</a></p>
 <p style="font-size:12px;color:#777">Payment reference: ${escapeHtml(d.razorpayPaymentId)}</p>`),
-    text: `Thank you, ${d.customerName}.\n\nWe've received your payment for order ${d.orderNumber}.\n\n${itemsText(d)}\n\nShipping to:\n${addressText(d.address)}\n\nOrder status: ${d.statusUrl}\nPayment reference: ${d.razorpayPaymentId}`,
+    text: `Thank you, ${d.customerName}.\n\nWe've received your payment for order ${d.orderNumber}.\n\n${itemsText(d)}\n\nShipping to:\n${addressText(d.address)}\n\nShipping is free, and your order will be dispatched within 48 hours.\nOrder status: ${d.statusUrl}\nPayment reference: ${d.razorpayPaymentId}`,
   };
 }
 
@@ -167,24 +167,29 @@ ${itemsTable(d)}
 <p><strong>Customer</strong><br>${escapeHtml(d.customerName)}<br>${escapeHtml(d.customerEmail)}<br>${escapeHtml(d.customerPhone)}</p>
 <p><strong>Ship to</strong><br>${escapeHtml(addressText(d.address)).replace(/\n/g, "<br>")}</p>
 <p>Razorpay payment: ${escapeHtml(d.razorpayPaymentId)}</p>
-<p>Shiprocket order creation runs next; you'll get a separate email if it needs attention. Select the courier and schedule pickup in Shiprocket.</p>`),
+<p>If this order is not created in Shiprocket automatically, you will get a separate "Action needed — ship manually" email. Courier selection and pickup are always done by you in Shiprocket.</p>`),
     text: `New paid order ${d.orderNumber}\n\n${itemsText(d)}\n\nCustomer: ${d.customerName}, ${d.customerEmail}, ${d.customerPhone}\nShip to:\n${addressText(d.address)}\n\nRazorpay payment: ${d.razorpayPaymentId}`,
   };
 }
 
 export function shippingAlertEmail(
-  orderNumber: string,
+  d: OrderEmailData,
   reason: string,
   ownerEmail: string
 ): Omit<EmailMessage, "idempotencyKey"> {
+  const addr = escapeHtml(addressText(d.address)).replace(/\n/g, "<br>");
   return {
     to: ownerEmail,
-    subject: `Action needed: order ${orderNumber} was not sent to Shiprocket`,
-    html: wrap(`<h2 style="font-weight:normal">Order ${escapeHtml(orderNumber)} needs manual shipping</h2>
-<p>The order is <strong>paid and saved</strong>, but it could not be created in Shiprocket automatically:</p>
+    replyTo: d.customerEmail,
+    subject: `Action needed — ship order ${d.orderNumber} manually (dispatch within 48 hours)`,
+    html: wrap(`<h2 style="font-weight:normal">Ship order ${escapeHtml(d.orderNumber)} manually</h2>
+<p>This order is <strong>paid and saved</strong>. It was <strong>not</strong> sent to Shiprocket, and no shipment or label has been created:</p>
 <p style="background:#f4f1ec;padding:12px">${escapeHtml(reason)}</p>
-<p>Open the admin page to retry, or create the order manually in the Shiprocket dashboard.</p>`),
-    text: `Order ${orderNumber} is paid and saved, but could not be created in Shiprocket automatically:\n\n${reason}\n\nRetry from the admin page, or create it manually in Shiprocket.`,
+<p>Please pack and dispatch it within 48 hours (create the shipment yourself in Shiprocket or with any courier).</p>
+${itemsTable(d)}
+<p style="margin-top:16px"><strong>Ship to</strong><br>${escapeHtml(d.customerName)}<br>${addr}<br>Phone: ${escapeHtml(d.customerPhone)}</p>
+<p style="font-size:12px;color:#777">Once Shiprocket is set up, the admin page's "Retry failed steps" button can create the Shiprocket order instead.</p>`),
+    text: `Ship order ${d.orderNumber} manually.\n\nThis order is paid and saved. It was NOT sent to Shiprocket and no shipment or label was created:\n${reason}\n\nPlease dispatch within 48 hours.\n\n${itemsText(d)}\n\nShip to:\n${d.customerName}\n${addressText(d.address)}\nPhone: ${d.customerPhone}`,
   };
 }
 

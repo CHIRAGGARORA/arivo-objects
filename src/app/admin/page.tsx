@@ -42,7 +42,7 @@ function Badge({ tone, children }: { tone: "ok" | "warn" | "bad" | "muted"; chil
 }
 
 const taskTone = (s: string) => (s === "succeeded" ? "ok" : s === "needs_attention" ? "bad" : s === "failed" ? "warn" : "muted");
-const orderTone = (s: string) => (s === "paid" ? "ok" : s === "failed" ? "bad" : "muted");
+const orderTone = (s: string) => (s === "paid" ? "ok" : s === "failed" ? "bad" : s === "refunded" ? "warn" : "muted");
 
 export default async function AdminPage() {
   // proxy.ts already enforces this; checked again so the page is never

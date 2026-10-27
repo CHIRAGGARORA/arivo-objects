@@ -11,6 +11,7 @@ import {
   setEnv,
   sql,
   webhookRequest,
+  signedWebhook,
 } from "./helpers";
 import { POST as create } from "@/app/api/checkout/create/route";
 import { POST as verify } from "@/app/api/checkout/verify/route";
@@ -59,6 +60,7 @@ async function tasks(orderId: string) {
 beforeEach(async () => {
   setEnv();
   await resetDb();
+  disableTestCatalog();
   await enableTestCatalog(5);
   fakes = new Fakes().install();
 });
@@ -215,6 +217,76 @@ describe("cart validation and trusted pricing", () => {
     const b = await (await create(jsonRequest("/api/checkout/create", payload))).json();
     expect(b.orderNumber).toBe(a.orderNumber);
     expect(fakes.rzpOrders.size).toBe(1);
+  });
+});
+
+describe("refunds", () => {
+  const refundEvent = (paymentId: string, refundId: string, amount: number) =>
+    signedWebhook({
+      entity: "event",
+      event: "refund.processed",
+      payload: { refund: { entity: { id: refundId, payment_id: paymentId, amount, status: "processed" } } },
+    });
+
+  async function paidOrder() {
+    const { body } = await startCheckout([TRAY()], { couponCode: "FIRST5" });
+    const payment = fakes.pay(body.razorpayOrderId);
+    await verifyPayment(body.razorpayOrderId, payment.id);
+    return { body, payment };
+  }
+
+  it("marks an order refunded on a full refund, once, and flags stock for review", async () => {
+    const { body, payment } = await paidOrder();
+    expect((await webhook(refundEvent(payment.id, "rfnd_A1", 85400))).status).toBe(200);
+    expect((await webhook(refundEvent(payment.id, "rfnd_A1", 85400))).status).toBe(200); // re-delivered
+    const [o] = await sql<{ status: string; refunded_paise: number; attention_reason: string }>(
+      "SELECT status, refunded_paise, attention_reason FROM orders WHERE order_number = $1",
+      [body.orderNumber]
+    );
+    expect(o.status).toBe("refunded");
+    expect(o.refunded_paise).toBe(85400);
+    expect(o.attention_reason).toMatch(/Stock was not restored/);
+    expect(await sql("SELECT 1 FROM refunds")).toHaveLength(1);
+    const view = await (await orderStatus(new Request("https://example.test"), { params: Promise.resolve({ token: body.publicToken }) })).json();
+    expect(view.status).toBe("refunded");
+  });
+
+  it("keeps the order paid and flags a partial refund", async () => {
+    const { body, payment } = await paidOrder();
+    await webhook(refundEvent(payment.id, "rfnd_B1", 10000));
+    const [o] = await sql<{ status: string; attention_reason: string }>(
+      "SELECT status, attention_reason FROM orders WHERE order_number = $1",
+      [body.orderNumber]
+    );
+    expect(o.status).toBe("paid");
+    expect(o.attention_reason).toMatch(/Partial refund ₹100\.00/);
+  });
+
+  it("rejects a refund webhook with a bad signature", async () => {
+    const { body, payment } = await paidOrder();
+    const req = refundEvent(payment.id, "rfnd_C1", 85400);
+    const forged = new Request(req.url, {
+      method: "POST",
+      headers: { ...Object.fromEntries(req.headers), "x-razorpay-signature": "0".repeat(64) },
+      body: await req.text(),
+    });
+    expect((await webhook(forged)).status).toBe(400);
+    const [o] = await sql<{ status: string }>("SELECT status FROM orders WHERE order_number = $1", [body.orderNumber]);
+    expect(o.status).toBe("paid");
+  });
+});
+
+describe("launch catalogue", () => {
+  it("sells exactly the five owner-approved variants and never the Mini set", async () => {
+    const { products } = await import("@/lib/products");
+    const source = (await import("node:fs")).readFileSync(
+      (await import("node:path")).resolve(import.meta.dirname, "../src/lib/products.ts"),
+      "utf8"
+    );
+    // Read the committed flags from source (tests toggle the in-memory copy).
+    const approved = [...source.matchAll(/sellable: true/g)].length;
+    expect(approved).toBe(5);
+    expect(products.find((p) => p.slug === "mini-scented-candle-jar-pack-of-4")!.sellable).toBe(false);
   });
 });
 

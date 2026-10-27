@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { verifyWebhookSignature } from "@/lib/server/razorpay";
-import { confirmPayment, markPaymentFailed } from "@/lib/server/orders";
+import { confirmPayment, markPaymentFailed, recordRefund } from "@/lib/server/orders";
 import { processOrderTasks } from "@/lib/server/tasks";
 import { query } from "@/lib/server/db";
 import { json, runAfterResponse } from "@/lib/server/http";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Razorpay webhook. Subscribe ONLY to: payment.authorized, payment.captured,
- * payment.failed, order.paid.
+ * payment.failed, order.paid, refund.processed.
  *
  * Responses: 400 for a bad signature; 500 when we couldn't record/process the
  * event (Razorpay then retries); 200 once handled or safely ignored.
@@ -20,6 +20,7 @@ interface WebhookBody {
   payload?: {
     payment?: { entity?: { id?: string; order_id?: string; error_description?: string | null } };
     order?: { entity?: { id?: string } };
+    refund?: { entity?: { id?: string; payment_id?: string; amount?: number } };
   };
 }
 
@@ -72,6 +73,13 @@ export async function POST(req: Request) {
           await markPaymentFailed(payment.order_id, payment.error_description ?? "Payment failed");
         }
         break;
+      case "refund.processed": {
+        const refund = body.payload?.refund?.entity;
+        if (refund?.id && refund.payment_id && refund.amount) {
+          await recordRefund(refund.payment_id, refund.id, refund.amount);
+        }
+        break;
+      }
       default:
         break; // not subscribed / not used
     }

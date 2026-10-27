@@ -52,7 +52,8 @@ export async function GET(req: Request) {
       const tables = await query<{ table_name: string }>(
         "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
       );
-      return `migrations: ${migrations.map((m) => m.name).join(", ") || "none"}; tables: ${tables.length}`;
+      const owner = await query<{ environment: string }>("SELECT environment FROM deployment_guard WHERE id = 1").catch(() => []);
+      return `migrations: ${migrations.map((m) => m.name).join(", ") || "none"}; tables: ${tables.length}; claimed by: ${owner[0]?.environment ?? "unclaimed"}`;
     });
     checks.records = await check(async () => {
       const [r] = await query<Record<string, string>>(

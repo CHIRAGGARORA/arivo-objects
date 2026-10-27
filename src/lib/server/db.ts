@@ -35,10 +35,38 @@ export function getPool(): Pool {
   return pool;
 }
 
+let guardChecked: string | null = null;
+
+/**
+ * Runtime half of the environment guard in scripts/migrate.mjs: on Vercel
+ * preview/production deployments, refuse to process orders or payments if the
+ * database was claimed by the other environment. Cached per server instance.
+ */
+export async function ensureDatabaseEnvironment(): Promise<void> {
+  const env = process.env.VERCEL_ENV;
+  if (env !== "production" && env !== "preview") return;
+  if (guardChecked === env) return;
+  const rows = (await getPool().query<{ environment: string }>(
+    "SELECT environment FROM deployment_guard WHERE id = 1"
+  ).catch(() => ({ rows: [] as { environment: string }[] }))).rows;
+  if (rows[0]?.environment !== env) {
+    throw new DatabaseEnvironmentError(rows[0]?.environment ?? "unclaimed", env);
+  }
+  guardChecked = env;
+}
+
+export class DatabaseEnvironmentError extends Error {
+  constructor(owner: string, env: string) {
+    super(`Database belongs to "${owner}", not "${env}"; refusing to process orders.`);
+    this.name = "DatabaseEnvironmentError";
+  }
+}
+
 /** Test helper: close the pool so a new DATABASE_URL takes effect cleanly. */
 export async function resetPool(): Promise<void> {
   const p = pool;
   pool = null;
+  guardChecked = null;
   poolUrl = undefined;
   await p?.end().catch(() => {});
 }

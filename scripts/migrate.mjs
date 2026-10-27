@@ -64,6 +64,28 @@ try {
     }
   }
   console.log("[migrate] up to date.");
+
+  // Environment guard: a database is claimed by the first deployment
+  // environment (preview or production) that migrates it. A build for the
+  // other environment then fails, so production can never run against the
+  // test database (or vice versa). Local/dev runs (no VERCEL_ENV) skip this.
+  const env = process.env.VERCEL_ENV;
+  if (env === "production" || env === "preview") {
+    await client.query(`CREATE TABLE IF NOT EXISTS deployment_guard (
+      id integer PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+      environment text NOT NULL CHECK (environment IN ('preview', 'production')),
+      claimed_at timestamptz NOT NULL DEFAULT now()
+    )`);
+    await client.query("INSERT INTO deployment_guard (environment) VALUES ($1) ON CONFLICT (id) DO NOTHING", [env]);
+    const owner = (await client.query("SELECT environment FROM deployment_guard WHERE id = 1")).rows[0].environment;
+    if (owner !== env) {
+      throw new Error(
+        `This database belongs to the "${owner}" environment; refusing to use it for a "${env}" deployment. ` +
+          `Connect a separate database to ${env} in Vercel → Storage.`
+      );
+    }
+    console.log(`[migrate] database environment: ${owner}`);
+  }
 } finally {
   await client.query("SELECT pg_advisory_unlock($1)", [LOCK_ID]).catch(() => {});
   await client.end();

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   checkoutBody,
+  claimDatabaseFor,
   disableTestCatalog,
   enableTestCatalog,
   Fakes,
@@ -87,6 +88,15 @@ describe("checkout configuration gate", () => {
     expect((await startCheckout()).res.status).toBe(503);
   });
 
+  it("refuses checkout in production when the database belongs to preview", async () => {
+    await claimDatabaseFor("preview");
+    setEnv({ VERCEL_ENV: "production" });
+    const { res, body } = await startCheckout();
+    expect(res.status).toBe(503);
+    expect(body.error).toBe("unavailable");
+    expect(fakes.rzpOrders.size).toBe(0);
+  });
+
   it("refuses checkout in production while the shipping fee is undecided", async () => {
     const { siteConfig } = await import("@/lib/siteConfig");
     const fee = siteConfig.shippingFeeInr;
@@ -109,6 +119,7 @@ describe("preview-only test products", () => {
   });
 
   it("lets a preview with TEST keys sell a listed variant", async () => {
+    await claimDatabaseFor("preview");
     setEnv({ VERCEL_ENV: "preview", PREVIEW_SELLABLE_VARIANTS: "scented-candle-jar-pack-of-4/sandalwood" });
     expect((await startCheckout([CANDLE])).res.status).toBe(200);
   });

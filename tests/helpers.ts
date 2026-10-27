@@ -42,9 +42,17 @@ export async function resetDb() {
   await c.connect();
   await c.query(`TRUNCATE customers, inventory, orders, order_items, order_tasks, payment_events,
     newsletter_subscribers, contact_messages, rate_limits RESTART IDENTITY CASCADE`);
+  await c.query("DROP TABLE IF EXISTS deployment_guard");
   await c.end();
   await resetPool();
   resetShiprocketToken();
+}
+
+/** What a real preview build does: claim the database for "preview". */
+export async function claimDatabaseFor(env: "preview" | "production") {
+  await sql(`CREATE TABLE IF NOT EXISTS deployment_guard (
+    id integer PRIMARY KEY DEFAULT 1, environment text NOT NULL, claimed_at timestamptz NOT NULL DEFAULT now())`);
+  await sql("INSERT INTO deployment_guard (environment) VALUES ($1)", [env]);
 }
 
 export async function sql<T = Record<string, unknown>>(text: string, params: unknown[] = []): Promise<T[]> {

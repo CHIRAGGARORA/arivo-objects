@@ -1,7 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import type { PoolClient } from "pg";
-import { query, withTransaction } from "./db";
+import { ensureDatabaseEnvironment, query, withTransaction } from "./db";
 import { CartError, CartItemInput, priceCart } from "./catalog";
 import { CouponError } from "./coupons";
 import {
@@ -98,6 +98,7 @@ async function assertStock(client: PoolClient, items: { productSlug: string; var
 export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder> {
   // Throws CartError on any invalid line, CouponError on an unknown code.
   const priced = priceCart(input.items, input.couponCode);
+  await ensureDatabaseEnvironment();
   const email = input.customer.email.trim().toLowerCase();
 
   // A repeated submit of the same checkout attempt returns the same order.
@@ -258,6 +259,7 @@ async function flagAttention(orderId: string, reason: string) {
  * Safe to call any number of times, concurrently, from any path.
  */
 export async function confirmPayment(razorpayOrderId: string, razorpayPaymentId: string): Promise<ConfirmResult> {
+  await ensureDatabaseEnvironment();
   const order = (
     await query<OrderRow>(
       "SELECT id, status, total_paise, razorpay_payment_id FROM orders WHERE razorpay_order_id = $1",

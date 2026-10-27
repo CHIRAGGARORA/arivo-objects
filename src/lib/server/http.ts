@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { after, NextResponse } from "next/server";
-import { query, DatabaseUnavailableError } from "./db";
+import { query, DatabaseEnvironmentError, DatabaseUnavailableError } from "./db";
 import { config } from "./config";
 
 export function json(body: unknown, status = 200) {
@@ -58,5 +58,9 @@ export async function rateLimited(req: Request, bucket: string, limit: number, w
 }
 
 export function isDbDown(err: unknown): boolean {
+  if (err instanceof DatabaseEnvironmentError) {
+    console.error("[db] environment guard:", err.message);
+    return true;
+  }
   return err instanceof DatabaseUnavailableError;
 }

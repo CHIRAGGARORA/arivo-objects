@@ -4,6 +4,7 @@ import { query, withTransaction } from "@/lib/server/db";
 import { pingRazorpay } from "@/lib/server/razorpay";
 import { listPickupLocations, shiprocketConfigured } from "@/lib/server/shiprocket";
 import { json } from "@/lib/server/http";
+import { formsSelfTest } from "@/lib/server/selftest";
 import { products } from "@/lib/products";
 import { getPackedSpec, isCompleteSpec } from "@/lib/shipping-specs";
 
@@ -21,14 +22,25 @@ async function check(fn: () => Promise<string | undefined | void>): Promise<Chec
 }
 
 /**
+ * Allowed with the admin password, or — outside production — on a
+ * *.vercel.app preview URL, which Vercel's own login protects. Custom domains
+ * (e.g. the public test.arivoobjects.com) always need the admin password.
+ */
+function allowed(req: Request): boolean {
+  if (isAdminAuthorized(req.headers.get("authorization"))) return true;
+  if (deployEnv() === "production") return false;
+  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").toLowerCase();
+  return host.endsWith(".vercel.app");
+}
+
+/**
  * Configuration + connectivity report. Values are never returned — only
  * whether each setting exists and whether read-only calls succeed.
- * Production requires admin auth; previews sit behind Vercel's login.
+ * `?selftest=forms` (non-production only) submits the real contact and
+ * newsletter handlers, confirms the rows were saved, then deletes them.
  */
 export async function GET(req: Request) {
-  if (deployEnv() === "production" && !isAdminAuthorized(req.headers.get("authorization"))) {
-    return json({ error: "unauthorized" }, 401);
-  }
+  if (!allowed(req)) return json({ error: "unauthorized" }, 401);
 
   const status = integrationStatus();
   const checks: Record<string, Check> = {};
@@ -96,6 +108,10 @@ export async function GET(req: Request) {
       }
       return "login ok; pickup location matches";
     });
+  }
+
+  if (deployEnv() !== "production" && new URL(req.url).searchParams.get("selftest") === "forms" && config.databaseUrl()) {
+    checks.formsSelfTest = await check(formsSelfTest);
   }
 
   const sellable = products.flatMap((p) =>

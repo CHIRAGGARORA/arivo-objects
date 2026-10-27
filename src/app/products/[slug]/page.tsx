@@ -12,8 +12,9 @@ export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const product = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const product = getProductBySlug(slug);
   if (!product) return pageMetadata({ title: "Product not found", description: "This product could not be found.", path: "/shop" });
   return pageMetadata({
     title: product.name,
@@ -26,8 +27,9 @@ function isCandleDetails(d: unknown): d is CandleDetails {
   return typeof d === "object" && d !== null && "waxType" in d;
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const product = getProductBySlug(params.slug);
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const product = getProductBySlug(slug);
   if (!product) notFound();
 
   const related = getRelatedProducts(product.slug);

@@ -112,7 +112,7 @@ export function CartDrawer() {
             <span>{formatPrice(subtotal)}</span>
           </div>
           <button
-            disabled={lines.length === 0}
+            disabled
             className="w-full bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:opacity-40"
             title="Online checkout is not yet live"
           >

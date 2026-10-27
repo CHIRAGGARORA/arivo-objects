@@ -8,7 +8,7 @@ no paid database, no paid API required to develop or preview it locally.
 
 ## 1. Running it locally
 
-You need [Node.js](https://nodejs.org) 18.17 or later installed.
+You need [Node.js](https://nodejs.org) 20.9 or later installed.
 
 ```bash
 cd arivo-objects

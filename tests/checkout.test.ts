@@ -80,26 +80,40 @@ describe("checkout configuration gate", () => {
   });
 
   it("refuses checkout in production while the shipping fee is undecided", async () => {
-    setEnv({ VERCEL_ENV: "production" });
-    const { res, body } = await startCheckout();
-    expect(res.status).toBe(503);
-    expect(body.error).toBe("shipping_fee_not_configured");
+    const { siteConfig } = await import("@/lib/siteConfig");
+    const fee = siteConfig.shippingFeeInr;
+    siteConfig.shippingFeeInr = null;
+    try {
+      setEnv({ VERCEL_ENV: "production" });
+      const { res, body } = await startCheckout();
+      expect(res.status).toBe(503);
+      expect(body.error).toBe("shipping_fee_not_configured");
+    } finally {
+      siteConfig.shippingFeeInr = fee;
+    }
   });
 });
 
 describe("preview-only test products", () => {
-  const CANDLE = { slug: "flower-jesmonite-candle", variantId: "black-marble", quantity: 1 };
+  const CANDLE = { slug: "scented-candle-jar-pack-of-4", variantId: "sandalwood", quantity: 1 };
   beforeEach(async () => {
-    await sql("INSERT INTO inventory VALUES ('flower-jesmonite-candle', 'black-marble', 3)");
+    await sql("INSERT INTO inventory VALUES ('scented-candle-jar-pack-of-4', 'sandalwood', 3)");
   });
 
   it("lets a preview with TEST keys sell a listed variant", async () => {
-    setEnv({ VERCEL_ENV: "preview", PREVIEW_SELLABLE_VARIANTS: "flower-jesmonite-candle/black-marble" });
+    setEnv({ VERCEL_ENV: "preview", PREVIEW_SELLABLE_VARIANTS: "scented-candle-jar-pack-of-4/sandalwood" });
     expect((await startCheckout([CANDLE])).res.status).toBe(200);
   });
 
+  it("never lets a preview sell a product the catalogue marks 'coming soon'", async () => {
+    await sql("INSERT INTO inventory VALUES ('mini-scented-candle-jar-pack-of-4', 'sandalwood', 3)");
+    setEnv({ VERCEL_ENV: "preview", PREVIEW_SELLABLE_VARIANTS: "mini-scented-candle-jar-pack-of-4/sandalwood" });
+    const { body } = await startCheckout([{ slug: "mini-scented-candle-jar-pack-of-4", variantId: "sandalwood", quantity: 1 }]);
+    expect(body.error).toBe("not_sellable");
+  });
+
   it("ignores the list in production", async () => {
-    setEnv({ VERCEL_ENV: "production", PREVIEW_SELLABLE_VARIANTS: "flower-jesmonite-candle/black-marble" });
+    setEnv({ VERCEL_ENV: "production", PREVIEW_SELLABLE_VARIANTS: "scented-candle-jar-pack-of-4/sandalwood" });
     const { body } = await startCheckout([CANDLE]);
     expect(body.error).toBe("not_sellable");
   });
@@ -109,7 +123,7 @@ describe("preview-only test products", () => {
       VERCEL_ENV: "preview",
       RAZORPAY_KEY_ID: "rzp_live_FAKE",
       PAYMENTS_LIVE_APPROVED: "true",
-      PREVIEW_SELLABLE_VARIANTS: "flower-jesmonite-candle/black-marble",
+      PREVIEW_SELLABLE_VARIANTS: "scented-candle-jar-pack-of-4/sandalwood",
     });
     // The fake provider only accepts the test key, so stop at validation.
     const { body } = await startCheckout([CANDLE]);
@@ -136,7 +150,8 @@ describe("cart validation and trusted pricing", () => {
     ["fractional quantity", [TRAY("black-marble", 1.5)], "invalid_quantity"],
     ["excessive quantity", [TRAY("black-marble", 11)], "invalid_quantity"],
     ["disabled variant", [TRAY("ochre-marble")], "not_sellable"],
-    ["disabled product", [{ slug: "flower-jesmonite-candle", variantId: "black-marble", quantity: 1 }], "not_sellable"],
+    ["unapproved product", [{ slug: "scented-candle-jar-pack-of-4", variantId: "sandalwood", quantity: 1 }], "not_sellable"],
+    ["coming-soon product", [{ slug: "mini-scented-candle-jar-pack-of-4", variantId: "sandalwood", quantity: 1 }], "not_sellable"],
     ["duplicate lines", [TRAY(), TRAY()], "duplicate_line"],
     ["more than in stock", [TRAY("black-marble", 6)], "out_of_stock"],
   ])("rejects %s", async (_label, items, code) => {
@@ -177,6 +192,46 @@ describe("cart validation and trusted pricing", () => {
     const b = await (await create(jsonRequest("/api/checkout/create", payload))).json();
     expect(b.orderNumber).toBe(a.orderNumber);
     expect(fakes.rzpOrders.size).toBe(1);
+  });
+});
+
+describe("coupons", () => {
+  it("FIRST5 takes 5% (rounded to the rupee) off ₹899 → ₹854, computed on the server", async () => {
+    const { res, body } = await startCheckout([TRAY()], { couponCode: "first5", discountPaise: 89900 });
+    expect(res.status).toBe(200);
+    expect(body.amountPaise).toBe(85400);
+    expect(fakes.rzpOrders.get(body.razorpayOrderId)!.amount).toBe(85400);
+    const [o] = await sql<{ coupon_code: string; discount_paise: number; total_paise: number }>(
+      "SELECT coupon_code, discount_paise, total_paise FROM orders"
+    );
+    expect(o).toEqual({ coupon_code: "FIRST5", discount_paise: 4500, total_paise: 85400 });
+  });
+
+  it("rejects an unknown code without creating anything", async () => {
+    const { res, body } = await startCheckout([TRAY()], { couponCode: "FREE100" });
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("invalid_coupon");
+    expect(fakes.rzpOrders.size).toBe(0);
+  });
+
+  it("only allows FIRST5 on a customer's first paid order", async () => {
+    const first = (await startCheckout([TRAY()], { couponCode: "FIRST5" })).body;
+    await verifyPayment(first.razorpayOrderId, fakes.pay(first.razorpayOrderId).id);
+    const { res, body } = await startCheckout([TRAY()], { couponCode: "FIRST5" });
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("coupon_not_eligible");
+    // Without the code the same customer can still order.
+    expect((await startCheckout([TRAY()])).res.status).toBe(200);
+  });
+
+  it("includes the discount in the confirmation email and the Shiprocket order", async () => {
+    const { body } = await startCheckout([TRAY()], { couponCode: "FIRST5" });
+    await verifyPayment(body.razorpayOrderId, fakes.pay(body.razorpayOrderId).id);
+    const email = fakes.emails.find((e) => e.to === "customer@example.test")!;
+    expect(email.text).toMatch(/Discount \(FIRST5\): -₹45/);
+    expect(email.text).toMatch(/Total paid: ₹854/);
+    expect(email.text).toMatch(/Shipping: Free/);
+    expect(fakes.shiprocketOrders[0].total_discount).toBe(45);
   });
 });
 

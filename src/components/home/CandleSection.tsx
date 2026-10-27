@@ -1,31 +1,32 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
+import { ProductPicture } from "@/components/ui/ProductPicture";
+import { formatPrice, getMainImage, getProductBySlug } from "@/lib/products";
 
 export function CandleSection() {
+  const product = getProductBySlug("scented-candle-jar-pack-of-4");
+  if (!product) return null;
+
   return (
-    <section className="bg-charcoal py-20 text-ivory md:py-28">
-      <Container className="grid grid-cols-1 items-center gap-12 md:grid-cols-2 md:gap-20">
+    <section className="bg-charcoal py-16 text-ivory md:py-24">
+      <Container className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-20">
         <div>
-          <h2 className="max-w-md font-display text-3xl leading-tight md:text-4xl">
-            A small ritual, held in Jesmonite.
+          <p className="text-xs uppercase tracking-wide2 text-ivory/60">New · Scented candles</p>
+          <h2 className="mt-3 max-w-md font-display text-3xl leading-tight md:text-5xl">
+            Four jars. One scent.
           </h2>
           <p className="mt-5 max-w-sm text-base text-ivory/75">
-            The flower-engraved candle vessel is designed to be lit, and kept once
-            the wax is gone. Final wax, fragrance and burn specifications are being
-            confirmed through testing before the complete candle goes on sale.
+            A pack of four patterned candle jars in sandalwood. Easy to gift, easy
+            to keep. More fragrances coming soon.
           </p>
           <Link
-            href="/products/flower-jesmonite-candle"
-            className="mt-8 inline-block border border-ivory px-7 py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-ivory hover:text-charcoal"
+            href={`/products/${product.slug}`}
+            className="mt-8 inline-block bg-ivory px-7 py-3 text-sm tracking-wide text-charcoal transition-opacity duration-400 hover:opacity-90"
           >
-            View the candle
+            Shop the 4-pack · {formatPrice(product.price)}
           </Link>
         </div>
-        <PlaceholderImage
-          alt="The Arivo flower candle, lit"
-          aspect="portrait"
-        />
+        <ProductPicture image={getMainImage(product.variants[0])} aspect="square" />
       </Container>
     </section>
   );

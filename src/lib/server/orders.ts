@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import type { PoolClient } from "pg";
 import { query, withTransaction } from "./db";
 import { CartError, CartItemInput, priceCart } from "./catalog";
+import { CouponError } from "./coupons";
 import {
   capturePayment,
   createRazorpayOrder,
@@ -44,6 +45,7 @@ export interface AddressInput {
 
 export interface CreateOrderInput {
   clientRequestId: string;
+  couponCode?: string | null;
   items: CartItemInput[];
   customer: CustomerInput;
   address: AddressInput;
@@ -94,7 +96,8 @@ async function assertStock(client: PoolClient, items: { productSlug: string; var
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder> {
-  const priced = priceCart(input.items); // throws CartError on any invalid line
+  // Throws CartError on any invalid line, CouponError on an unknown code.
+  const priced = priceCart(input.items, input.couponCode);
   const email = input.customer.email.trim().toLowerCase();
 
   // A repeated submit of the same checkout attempt returns the same order.
@@ -126,6 +129,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   //    before any Razorpay order exists.
   const order = await withTransaction(async (client) => {
     await assertStock(client, priced.lines);
+    if (priced.coupon?.firstOrderOnly) {
+      const prior = await client.query(
+        `SELECT 1 FROM orders o JOIN customers c ON c.id = o.customer_id
+          WHERE c.email = $1 AND o.status = 'paid' LIMIT 1`,
+        [email]
+      );
+      if (prior.rowCount) {
+        throw new CouponError("coupon_not_eligible", `${priced.coupon.code} is only valid on your first order.`);
+      }
+    }
     const customer = (
       await client.query<{ id: string }>(
         `INSERT INTO customers (email, name, phone) VALUES ($1, $2, $3)
@@ -152,14 +165,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
       row = (
         await client.query<{ id: string; public_token: string }>(
           `INSERT INTO orders (order_number, public_token, client_request_id, customer_id,
-             subtotal_paise, shipping_paise, total_paise, shipping_address)
-           VALUES ($1, gen_random_uuid(), $2, $3, $4, $5, $6, $7)
+             subtotal_paise, coupon_code, discount_paise, shipping_paise, total_paise, shipping_address)
+           VALUES ($1, gen_random_uuid(), $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING id, public_token`,
           [
             orderNumber,
             input.clientRequestId,
             customer.id,
             priced.subtotalPaise,
+            priced.coupon?.code ?? null,
+            priced.discountPaise,
             priced.shippingPaise,
             priced.totalPaise,
             JSON.stringify(shippingAddress),
@@ -382,6 +397,8 @@ export interface PublicOrderView {
   status: "pending" | "paid" | "failed" | "cancelled";
   items: { name: string; variantLabel: string; quantity: number; unitPricePaise: number }[];
   subtotalPaise: number;
+  couponCode: string | null;
+  discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
   firstName: string;
@@ -399,12 +416,14 @@ export async function getOrderByPublicToken(token: string): Promise<PublicOrderV
       order_number: string;
       status: PublicOrderView["status"];
       subtotal_paise: number;
+      coupon_code: string | null;
+      discount_paise: number;
       shipping_paise: number;
       total_paise: number;
       shipping_address: { name: string };
       created_at: Date;
     }>(
-      `SELECT id, order_number, status, subtotal_paise, shipping_paise, total_paise, shipping_address, created_at
+      `SELECT id, order_number, status, subtotal_paise, coupon_code, discount_paise, shipping_paise, total_paise, shipping_address, created_at
        FROM orders WHERE public_token = $1`,
       [token]
     )
@@ -430,6 +449,8 @@ export async function getOrderByPublicToken(token: string): Promise<PublicOrderV
       unitPricePaise: i.unit_price_paise,
     })),
     subtotalPaise: order.subtotal_paise,
+    couponCode: order.coupon_code,
+    discountPaise: order.discount_paise,
     shippingPaise: order.shipping_paise,
     totalPaise: order.total_paise,
     firstName: order.shipping_address.name.split(/\s+/)[0],

@@ -1,5 +1,4 @@
 import { Container } from "@/components/ui/Container";
-import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 import { siteConfig } from "@/lib/siteConfig";
 
 /**
@@ -13,13 +12,13 @@ export function InstagramSection() {
   const href = siteConfig.instagramUrl ?? "/contact";
 
   return (
-    <section className="py-20 md:py-28">
+    <section className="py-14 md:py-20">
       <Container>
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <h2 className="font-display text-2xl md:text-3xl">Follow Arivo</h2>
             <p className="mt-2 text-sm text-charcoal/70">
-              Objects, process and the studio — day to day.
+              New drops and behind the scenes.
             </p>
           </div>
           <a
@@ -28,13 +27,6 @@ export function InstagramSection() {
           >
             {handle ? `Follow @${handle}` : "Follow on Instagram"}
           </a>
-        </div>
-        <div className="mt-10 grid grid-cols-3 gap-2 md:gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <a key={i} href={href} aria-label="View on Instagram">
-              <PlaceholderImage alt="Arivo Objects on Instagram" aspect="square" />
-            </a>
-          ))}
         </div>
       </Container>
     </section>

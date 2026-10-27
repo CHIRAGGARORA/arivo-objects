@@ -25,7 +25,7 @@ export function Footer() {
         <div className="col-span-2 md:col-span-1">
           <Logo variant="full" href="/" className="w-14" />
           <p className="mt-4 max-w-[26ch] text-sm text-charcoal/70">
-            Design-led home objects, cast and finished by hand.
+            Design-led home decor and gifts.
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export function Footer() {
 
       <Container className="flex flex-col gap-2 border-t border-sand/60 py-6 text-xs text-charcoal/50 md:flex-row md:items-center md:justify-between">
         <p>&copy; {new Date().getFullYear()} Arivo Objects. All rights reserved.</p>
-        <p>Handcrafted in India.</p>
+        <p>Designed in India.</p>
       </Container>
     </footer>
   );

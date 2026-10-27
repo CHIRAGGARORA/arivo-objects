@@ -4,7 +4,7 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
   title: "About",
-  description: "Arivo Objects explores the relationship between everyday function and sculptural form.",
+  description: "Arivo Objects is a design-led home decor and gifting brand.",
   path: "/about",
 });
 
@@ -14,10 +14,9 @@ export default function AboutPage() {
       <Container className="max-w-3xl">
         <h1 className="font-display text-3xl md:text-5xl">About Arivo</h1>
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-charcoal/80">
-          Arivo Objects is an independent, design-led home-object brand. It
-          explores the relationship between everyday function and sculptural
-          form — objects that hold their own as designed pieces, and that
-          also happen to be useful.
+          Arivo Objects is an independent, design-led home decor and gifting
+          brand. We make and curate objects for your space, from marble trays
+          to scented candles, that look good and are easy to give.
         </p>
       </Container>
 
@@ -30,26 +29,16 @@ export default function AboutPage() {
           <h2 className="font-display text-2xl">Form, texture, function</h2>
           <p className="mt-3 text-base leading-relaxed text-charcoal/75">
             Every object starts with material and shape before it starts with
-            purpose. Jesmonite pours and marbles in a particular way, and the
-            first collection — the trays, the candle vessel — grew out of
-            working with that tendency rather than against it.
+            purpose. Our marble trays are cast in Jesmonite, which pours and
+            marbles in a particular way, so each one is slightly different.
           </p>
         </div>
         <div>
-          <h2 className="font-display text-2xl">Individuality</h2>
+          <h2 className="font-display text-2xl">Made to give</h2>
           <p className="mt-3 text-base leading-relaxed text-charcoal/75">
-            Each piece is cast and finished by hand, in small batches. Marble
-            patterns form during the pour itself, which means no two objects
-            are exactly identical — a deliberate part of how these pieces are
-            made, not a limitation of it.
-          </p>
-        </div>
-        <div>
-          <h2 className="font-display text-2xl">Slow production</h2>
-          <p className="mt-3 text-base leading-relaxed text-charcoal/75">
-            Objects are made in small runs rather than mass-produced. That
-            means occasional waiting between order and dispatch — the trade-off
-            for pieces that are cast, cured, sanded and finished individually.
+            We&rsquo;re building a small range of decor that works as a gift as
+            much as it does on your own shelf, starting with scented candle
+            jar sets and trays, with more on the way.
           </p>
         </div>
       </Container>

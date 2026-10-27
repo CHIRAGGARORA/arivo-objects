@@ -54,6 +54,7 @@ interface CartContextValue {
   setLineQuantity: (product: Product, variantId: string, quantity: number) => void;
   removeItem: (productSlug: string, variantId: string) => void;
   updateQuantity: (productSlug: string, variantId: string, quantity: number) => void;
+  /** Empties the cart — used once a payment is verified as captured. */
   clearCart: () => void;
   subtotal: number;
   itemCount: number;
@@ -232,6 +233,10 @@ export function CartProvider({
     [removeItem]
   );
 
+  const clearCart = useCallback(() => {
+    setLines([]);
+  }, []);
+
   const subtotal = useMemo(
     () => lines.reduce((sum, l) => sum + l.price * l.quantity, 0),
     [lines]
@@ -242,7 +247,6 @@ export function CartProvider({
     [lines]
   );
 
-  const clearCart = useCallback(() => setLines([]), []);
   const sellableSet = useMemo(() => new Set(sellableVariants), [sellableVariants]);
   const isSellable = useCallback(
     (productSlug: string, variantId: string) => sellableSet.has(`${productSlug}/${variantId}`),

@@ -21,7 +21,7 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
     <div>
       <ProductPicture
         image={active}
-        aspect="portrait"
+        aspect={active.aspect ?? "portrait"}
         priority
         sizes="(min-width: 1024px) 50vw, 100vw"
       />

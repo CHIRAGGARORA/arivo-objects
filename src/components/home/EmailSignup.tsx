@@ -45,7 +45,7 @@ export function EmailSignup() {
       <Container className="max-w-xl text-center">
         <h2 className="font-display text-2xl md:text-3xl">Enter the world of Arivo.</h2>
         <p className="mt-3 text-sm text-charcoal/70">
-          Occasional notes on new objects, restocks and the studio.
+          New drops and restocks.
         </p>
         {status !== "submitted" ? (
           <form onSubmit={handleSubmit} noValidate className="mt-8">

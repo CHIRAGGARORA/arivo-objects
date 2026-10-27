@@ -30,7 +30,8 @@ export const packedSpecs: Record<string, PackedSpec> = {
   "small-oval-marble-tray/terracotta-marble": { ...PENDING }, // [MEASUREMENTS_PENDING]
   "small-oval-marble-tray/ochre-marble": { ...PENDING }, // [MEASUREMENTS_PENDING]
   "large-cloud-marble-tray/black-marble": { ...PENDING }, // [MEASUREMENTS_PENDING]
-  "flower-jesmonite-candle/black-marble": { ...PENDING }, // [MEASUREMENTS_PENDING]
+  "scented-candle-jar-pack-of-4/sandalwood": { ...PENDING }, // [MEASUREMENTS_PENDING]
+  "mini-scented-candle-jar-pack-of-4/sandalwood": { ...PENDING }, // [MEASUREMENTS_PENDING]
 };
 
 export function getPackedSpec(productSlug: string, variantId: string): PackedSpec | undefined {

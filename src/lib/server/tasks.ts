@@ -79,6 +79,8 @@ async function loadOrder(orderId: string): Promise<{ data: OrderEmailData; creat
       public_token: string;
       status: string;
       subtotal_paise: number;
+      coupon_code: string | null;
+      discount_paise: number;
       shipping_paise: number;
       total_paise: number;
       shipping_address: {
@@ -123,6 +125,8 @@ async function loadOrder(orderId: string): Promise<{ data: OrderEmailData; creat
         unitPricePaise: i.unit_price_paise,
       })),
       subtotalPaise: o.subtotal_paise,
+      couponCode: o.coupon_code,
+      discountPaise: o.discount_paise,
       shippingPaise: o.shipping_paise,
       totalPaise: o.total_paise,
       address: { line1: a.line1, line2: a.line2, city: a.city, state: a.state, pincode: a.pincode },
@@ -153,6 +157,7 @@ async function run(orderId: string, task: TaskName): Promise<unknown> {
         address: data.address,
         items: data.items,
         subtotalPaise: data.subtotalPaise,
+        discountPaise: data.discountPaise,
         shippingPaise: data.shippingPaise,
       });
     case "shipping_alert_email": {

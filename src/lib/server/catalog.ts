@@ -2,6 +2,7 @@ import "server-only";
 import { products } from "@/lib/products";
 import { siteConfig } from "@/lib/siteConfig";
 import { deployEnv, razorpayMode } from "./config";
+import { AppliedCoupon, applyCoupon } from "./coupons";
 
 /**
  * Trusted pricing. The browser only ever sends (slug, variantId, quantity);
@@ -30,6 +31,8 @@ export interface PricedLine {
 export interface PricedCart {
   lines: PricedLine[];
   subtotalPaise: number;
+  coupon: AppliedCoupon | null;
+  discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
 }
@@ -62,13 +65,14 @@ export class CartError extends Error {
 export function sellableVariantKeys(): string[] {
   const keys = new Set<string>();
   for (const p of products) {
+    if (p.sellable === false) continue; // product-level switch wins over everything, including previews
     for (const v of p.variants) if (v.sellable && v.inStock !== false) keys.add(`${p.slug}/${v.id}`);
   }
   if (deployEnv() !== "production" && razorpayMode() === "test") {
     for (const k of (process.env.PREVIEW_SELLABLE_VARIANTS ?? "").split(",")) {
       const key = k.trim();
       const [slug, variantId] = key.split("/");
-      if (products.some((p) => p.slug === slug && p.variants.some((v) => v.id === variantId))) keys.add(key);
+      if (products.some((p) => p.sellable !== false && p.slug === slug && p.variants.some((v) => v.id === variantId))) keys.add(key);
     }
   }
   return [...keys];
@@ -89,7 +93,7 @@ export function shippingFeePaise(): number {
   return Math.round(fee * 100);
 }
 
-export function priceCart(items: CartItemInput[]): PricedCart {
+export function priceCart(items: CartItemInput[], couponCode?: string | null): PricedCart {
   if (items.length === 0) throw new CartError("empty_cart", "Your cart is empty.");
   if (items.length > MAX_LINES) throw new CartError("too_many_lines", "Too many items in cart.");
 
@@ -130,6 +134,15 @@ export function priceCart(items: CartItemInput[]): PricedCart {
   });
 
   const subtotalPaise = lines.reduce((s, l) => s + l.unitPricePaise * l.quantity, 0);
+  const coupon = applyCoupon(couponCode, subtotalPaise); // throws CouponError for unknown codes
+  const discountPaise = coupon?.discountPaise ?? 0;
   const shippingPaise = shippingFeePaise();
-  return { lines, subtotalPaise, shippingPaise, totalPaise: subtotalPaise + shippingPaise };
+  return {
+    lines,
+    subtotalPaise,
+    coupon,
+    discountPaise,
+    shippingPaise,
+    totalPaise: subtotalPaise - discountPaise + shippingPaise,
+  };
 }

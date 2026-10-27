@@ -125,6 +125,7 @@ export interface ShipmentOrderInput {
   address: { line1: string; line2?: string | null; city: string; state: string; pincode: string };
   items: { productSlug: string; variantId: string; name: string; variantLabel: string; quantity: number; unitPricePaise: number }[];
   subtotalPaise: number;
+  discountPaise: number;
   shippingPaise: number;
 }
 
@@ -251,6 +252,7 @@ export async function createShipmentOrder(input: ShipmentOrderInput): Promise<Sh
     payment_method: "Prepaid",
     shipping_charges: input.shippingPaise / 100,
     sub_total: input.subtotalPaise / 100,
+    total_discount: input.discountPaise / 100,
     length: pkg.lengthCm,
     breadth: pkg.breadthCm,
     height: pkg.heightCm,

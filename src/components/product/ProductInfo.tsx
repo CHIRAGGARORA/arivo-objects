@@ -22,6 +22,8 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
 
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
   const orderable = isSellable(product.slug, variant.id);
+  // Products the catalogue marks as not for sale at all read "Coming soon".
+  const comingSoon = product.sellable === false;
 
   function handleBuyNow() {
     // Sets (not adds) the quantity, so pressing Buy Now on something
@@ -40,7 +42,9 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
 
       {product.variants.length > 1 && (
         <fieldset className="mt-8">
-          <legend className="text-sm">Colour — {variant.label}</legend>
+          <legend className="text-sm">
+            {product.variantLabel ?? "Colour"} — {variant.label}
+          </legend>
           <div className="mt-3 flex gap-3">
             {product.variants.map((v) => (
               <button
@@ -87,7 +91,11 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         </div>
 
         <p className="text-xs text-charcoal/50">
-          {!orderable
+          {comingSoon
+            ? "Coming soon"
+            : variant.inStock === false
+            ? "Currently unavailable"
+            : !orderable
             ? "Not yet available to order online"
             : "Availability confirmed at checkout"}
         </p>
@@ -98,9 +106,9 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
           type="button"
           onClick={() => addItem(product, variantId, quantity)}
           disabled={!orderable}
-          className="flex-1 bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex-1 bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40"
         >
-          Add to cart
+          {comingSoon ? "Coming soon" : "Add to cart"}
         </button>
         <button
           type="button"
@@ -112,10 +120,18 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         </button>
       </div>
 
-      <p className="mt-4 text-xs text-charcoal/50">
-        Each piece is individually cast. Marble patterns and, for the candle,
-        engraving depth vary naturally — no two pieces are exactly identical.
-      </p>
+      <ul className="mt-6 space-y-1.5 border-t border-sand/60 pt-5 text-xs text-charcoal/70">
+        <li>Free shipping on every order</li>
+        <li>Dispatched within 48 hours</li>
+        <li>No returns</li>
+      </ul>
+
+      {product.category === "tray" && (
+        <p className="mt-4 text-xs text-charcoal/50">
+          Each piece is individually cast. Marble patterns vary naturally — no two
+          pieces are exactly identical.
+        </p>
+      )}
     </div>
   );
 }

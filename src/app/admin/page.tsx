@@ -25,6 +25,7 @@ interface OrderRow {
   shipping_address: { name: string; email: string; phone: string; city: string; pincode: string };
   razorpay_payment_id: string | null;
   failure_reason: string | null;
+  coupon_code: string | null;
   created_at: Date;
   paid_at: Date | null;
   tasks: { task: string; status: string; attempts: number; last_error: string | null; result: Record<string, unknown> | null }[] | null;
@@ -61,7 +62,7 @@ export default async function AdminPage() {
   const [orders, contacts, subs, stock] = await Promise.all([
     query<OrderRow>(
       `SELECT o.id, o.order_number, o.status, o.attention_reason, o.total_paise, o.shipping_address,
-              o.razorpay_payment_id, o.failure_reason, o.created_at, o.paid_at,
+              o.razorpay_payment_id, o.failure_reason, o.created_at, o.paid_at, o.coupon_code,
               (SELECT json_agg(json_build_object('task', t.task, 'status', t.status, 'attempts', t.attempts,
                        'last_error', t.last_error, 'result', t.result) ORDER BY t.id)
                  FROM order_tasks t WHERE t.order_id = o.id) AS tasks
@@ -133,7 +134,7 @@ export default async function AdminPage() {
                       {o.shipping_address.name}<br />
                       <span className="text-charcoal/60">{o.shipping_address.email} · {o.shipping_address.phone}<br />{o.shipping_address.city} {o.shipping_address.pincode}</span>
                     </td>
-                    <td>{rupees(o.total_paise)}</td>
+                    <td>{rupees(o.total_paise)}{o.coupon_code && <div className="text-xs text-charcoal/60">{o.coupon_code}</div>}</td>
                     <td>
                       <Badge tone={orderTone(o.status)}>{o.status}</Badge>
                       {o.razorpay_payment_id && <div className="text-xs text-charcoal/60">{o.razorpay_payment_id}</div>}

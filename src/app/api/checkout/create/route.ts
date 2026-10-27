@@ -2,6 +2,7 @@ import { checkoutSchema, fieldErrors } from "@/lib/server/validation";
 import { checkoutBlockReason, config } from "@/lib/server/config";
 import { CartError } from "@/lib/server/catalog";
 import { createOrder, OrderError } from "@/lib/server/orders";
+import { CouponError } from "@/lib/server/coupons";
 import { isPincodeServiceable } from "@/lib/server/shiprocket";
 import { isDbDown, json, rateLimited, readJson, serviceUnavailable } from "@/lib/server/http";
 
@@ -47,6 +48,9 @@ export async function POST(req: Request) {
   } catch (err) {
     if (err instanceof CartError) {
       return json({ error: err.code, message: err.message, item: err.item }, err.code === "shipping_fee_not_configured" ? 503 : 400);
+    }
+    if (err instanceof CouponError) {
+      return json({ error: err.code, message: err.message, fields: { couponCode: err.message } }, 400);
     }
     if (err instanceof OrderError) {
       return json({ error: err.code, message: err.message }, err.code === "request_conflict" ? 409 : 502);

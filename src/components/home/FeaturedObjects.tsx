@@ -9,7 +9,7 @@ export function FeaturedObjects() {
   return (
     <section className="py-20 md:py-28">
       <Container>
-        <h2 className="font-display text-2xl md:text-3xl">The first collection</h2>
+        <h2 className="font-display text-2xl md:text-3xl">Shop the collection</h2>
         <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
           {products.map((product) => (
             <Link key={product.slug} href={`/products/${product.slug}`} className="group block">

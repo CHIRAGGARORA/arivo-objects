@@ -48,7 +48,7 @@ export interface SiteConfig {
 export const siteConfig: SiteConfig = {
   brandName: "ARIVO OBJECTS",
   legalName: null, // [BUSINESS_NAME_PENDING]
-  domain: "arivoobjects.com",
+  domain: "www.arivoobjects.com",
   email: null, // [BUSINESS_EMAIL_PENDING] — intended: hello@arivoobjects.com
   instagramHandle: "arivoobjects",
   instagramUrl: "https://www.instagram.com/arivoobjects/",
@@ -58,9 +58,13 @@ export const siteConfig: SiteConfig = {
   pan: null, // NEVER PUBLIC
   currency: "INR",
   currencySymbol: "₹",
-  paymentProvider: null, // [GATEWAY_PENDING] — planned: razorpay
-  shippingProvider: null, // [SHIPPING_PROVIDER_PENDING]
-  shippingFeeInr: null, // [SHIPPING_FEE_PENDING] — owner to decide
+  // Razorpay is integrated (see /checkout, /api/checkout/*, src/lib/server/).
+  // Live keys are refused unless PAYMENTS_LIVE_APPROVED=true.
+  paymentProvider: "razorpay",
+  shippingProvider: "shiprocket",
+  // Free shipping, as promised in the announcement bar ("Free shipping").
+  // Change both together if this ever changes.
+  shippingFeeInr: 0,
   socials: {
     instagram: "https://www.instagram.com/arivoobjects/",
   },

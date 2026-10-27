@@ -96,7 +96,7 @@ export class Fakes {
   payments = new Map<string, FakePayment>();
   emails: { to: string; subject: string; idempotencyKey: string; text: string }[] = [];
   emailKeysSeen = new Set<string>();
-  shiprocketOrders: { order_id: string; id: number; weight: number }[] = [];
+  shiprocketOrders: { order_id: string; id: number; weight: number; total_discount?: number }[] = [];
   calls: string[] = [];
   fail = { razorpayCreate: false, razorpayAll: false, resend: false as false | number, shiprocketCreate: false as false | number, shiprocketNetwork: false };
   serviceable = true;
@@ -187,7 +187,7 @@ export class Fakes {
         }
         if (url.pathname === "/v1/external/orders/create/adhoc") {
           if (this.fail.shiprocketCreate) return res(this.fail.shiprocketCreate, { message: "Simulated Shiprocket failure" });
-          const o = { order_id: body.order_id, id: 5000 + this.shiprocketOrders.length, weight: body.weight };
+          const o = { order_id: body.order_id, id: 5000 + this.shiprocketOrders.length, weight: body.weight, total_discount: body.total_discount };
           this.shiprocketOrders.push(o);
           return res(200, { order_id: o.id, shipment_id: o.id + 1000, status: "NEW", status_code: 1 });
         }

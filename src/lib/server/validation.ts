@@ -17,8 +17,11 @@ const phone = z
   .pipe(z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"));
 export const email = z.string().trim().toLowerCase().max(254).pipe(z.email("Enter a valid email address"));
 
+const couponCode = z.string().trim().max(40).optional().nullable();
+
 export const checkoutSchema = z.object({
   clientRequestId: z.uuid(),
+  couponCode,
   items: z
     .array(
       z.object({
@@ -40,6 +43,15 @@ export const checkoutSchema = z.object({
     pincode: z.string().trim().regex(/^[1-9]\d{5}$/, "Enter a valid 6-digit PIN code"),
   }),
   // Anything else the browser sends (e.g. a price or total) is ignored.
+});
+
+export const couponCheckSchema = z.object({
+  couponCode: z.string().trim().min(1).max(40),
+  items: z
+    .array(z.object({ slug: z.string().max(100), variantId: z.string().max(100), quantity: z.number() }))
+    .min(1)
+    .max(MAX_LINES),
+  email: email.optional(),
 });
 
 export const verifySchema = z.object({

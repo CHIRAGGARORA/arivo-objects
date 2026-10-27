@@ -6,6 +6,12 @@ export interface ProductImage {
   isPlaceholder: boolean;
   /** What this image is for — lets components pick the right shot for the right spot */
   role?: "main" | "gallery" | "lifestyle" | "detail";
+  /**
+   * How the product-page gallery frames this image. Defaults to the usual
+   * portrait crop; "square" shows a square photo whole (nothing cut off at
+   * the sides) — used for supplied photos composed edge to edge.
+   */
+  aspect?: "square";
 }
 
 export interface ProductVariant {
@@ -50,11 +56,23 @@ export interface Product {
   price: number;
   shortDescription: string;
   theObject: string;
-  theMaterial: string;
-  theProcess: string;
+  /** Optional — a product page only shows these sections once they're written. */
+  theMaterial?: string;
+  theProcess?: string;
+  /** What the variant selector chooses between. Defaults to "Colour". */
+  variantLabel?: string;
   details: ProductDetails | CandleDetails;
   variants: ProductVariant[];
   featured: boolean;
+  /**
+   * Whether this product can currently be purchased. Defaults to true when
+   * omitted. Set to false for products that aren't ready to sell yet (e.g.
+   * products that aren't ready, such as the mini candle set) — this is enforced both in the
+   * UI (Add to Cart / Buy Now disabled) and, independently, server-side in
+   * the order-creation API, so it can't be bypassed by tampering with the
+   * client.
+   */
+  sellable?: boolean;
 }
 
 export interface JournalArticle {

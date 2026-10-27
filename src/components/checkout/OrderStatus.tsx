@@ -10,6 +10,8 @@ interface OrderView {
   status: "pending" | "paid" | "failed" | "cancelled";
   items: { name: string; variantLabel: string; quantity: number; unitPricePaise: number }[];
   subtotalPaise: number;
+  couponCode: string | null;
+  discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
   firstName: string;
@@ -123,6 +125,12 @@ export function OrderStatus({ token }: { token: string }) {
       </ul>
       <dl className="mt-4 space-y-1 border-t border-sand/60 pt-4 text-sm">
         <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatPrice(order.subtotalPaise / 100)}</dd></div>
+        {order.discountPaise > 0 && (
+          <div className="flex justify-between">
+            <dt>Discount{order.couponCode ? ` (${order.couponCode})` : ""}</dt>
+            <dd>−{formatPrice(order.discountPaise / 100)}</dd>
+          </div>
+        )}
         <div className="flex justify-between"><dt>Shipping</dt><dd>{order.shippingPaise ? formatPrice(order.shippingPaise / 100) : "Free"}</dd></div>
         <div className="flex justify-between font-medium"><dt>{order.status === "paid" ? "Total paid" : "Total"}</dt><dd>{formatPrice(order.totalPaise / 100)}</dd></div>
       </dl>

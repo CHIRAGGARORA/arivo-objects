@@ -94,6 +94,8 @@ export interface OrderEmailData {
     unitPricePaise: number;
   }[];
   subtotalPaise: number;
+  couponCode: string | null;
+  discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
   address: {
@@ -117,7 +119,8 @@ function itemsTable(d: OrderEmailData) {
     .join("");
   return `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows}
 <tr><td style="padding-top:8px">Subtotal</td><td style="padding-top:8px;text-align:right">${rupees(d.subtotalPaise)}</td></tr>
-<tr><td>Shipping</td><td style="text-align:right">${rupees(d.shippingPaise)}</td></tr>
+${d.discountPaise ? `<tr><td>Discount${d.couponCode ? ` (${escapeHtml(d.couponCode)})` : ""}</td><td style="text-align:right">−${rupees(d.discountPaise)}</td></tr>` : ""}
+<tr><td>Shipping</td><td style="text-align:right">${d.shippingPaise ? rupees(d.shippingPaise) : "Free"}</td></tr>
 <tr><td style="font-weight:600">Total paid</td><td style="text-align:right;font-weight:600">${rupees(d.totalPaise)}</td></tr></table>`;
 }
 
@@ -125,7 +128,8 @@ function itemsText(d: OrderEmailData) {
   return [
     ...d.items.map((i) => `- ${i.name} — ${i.variantLabel} x ${i.quantity}: ${rupees(i.unitPricePaise * i.quantity)}`),
     `Subtotal: ${rupees(d.subtotalPaise)}`,
-    `Shipping: ${rupees(d.shippingPaise)}`,
+    ...(d.discountPaise ? [`Discount${d.couponCode ? ` (${d.couponCode})` : ""}: -${rupees(d.discountPaise)}`] : []),
+    `Shipping: ${d.shippingPaise ? rupees(d.shippingPaise) : "Free"}`,
     `Total paid: ${rupees(d.totalPaise)}`,
   ].join("\n");
 }

@@ -74,6 +74,14 @@ describe("checkout configuration gate", () => {
     expect(body.error).toBe("checkout_unavailable");
   });
 
+  it("refuses live keys on a preview/test deployment even when approval is set", async () => {
+    setEnv({ VERCEL_ENV: "preview", RAZORPAY_KEY_ID: "rzp_live_FAKE", PAYMENTS_LIVE_APPROVED: "true" });
+    const { res } = await startCheckout();
+    expect(res.status).toBe(503);
+    const { checkoutBlockReason } = await import("@/lib/server/config");
+    expect(checkoutBlockReason()).toBe("live_keys_outside_production");
+  });
+
   it("refuses live keys unless live payments are explicitly approved", async () => {
     setEnv({ RAZORPAY_KEY_ID: "rzp_live_FAKE" });
     expect((await startCheckout()).res.status).toBe(503);
@@ -125,9 +133,13 @@ describe("preview-only test products", () => {
       PAYMENTS_LIVE_APPROVED: "true",
       PREVIEW_SELLABLE_VARIANTS: "scented-candle-jar-pack-of-4/sandalwood",
     });
-    // The fake provider only accepts the test key, so stop at validation.
-    const { body } = await startCheckout([CANDLE]);
-    expect(body.error).toBe("not_sellable");
+    // Checkout itself is refused (live keys never run outside production)…
+    const { res, body } = await startCheckout([CANDLE]);
+    expect(res.status).toBe(503);
+    expect(body.error).toBe("checkout_unavailable");
+    // …and the preview-only list is ignored independently of that.
+    const { sellableVariantKeys } = await import("@/lib/server/catalog");
+    expect(sellableVariantKeys()).not.toContain("scented-candle-jar-pack-of-4/sandalwood");
   });
 });
 

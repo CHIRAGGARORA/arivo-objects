@@ -53,6 +53,7 @@ export const config = {
 export type CheckoutBlockReason =
   | "database_not_configured"
   | "razorpay_not_configured"
+  | "live_keys_outside_production"
   | "live_keys_not_approved";
 
 /** Why checkout can't run right now, or null when it can. */
@@ -60,7 +61,12 @@ export function checkoutBlockReason(): CheckoutBlockReason | null {
   if (!config.databaseUrl()) return "database_not_configured";
   const { keyId, keySecret, webhookSecret } = config.razorpay();
   if (!keyId || !keySecret || !webhookSecret) return "razorpay_not_configured";
-  if (keyId.startsWith("rzp_live_") && !config.livePaymentsApproved()) return "live_keys_not_approved";
+  if (keyId.startsWith("rzp_live_")) {
+    // Live keys only ever work on the production deployment, never on a
+    // preview/test site — even if the approval flag is set there by mistake.
+    if (deployEnv() !== "production") return "live_keys_outside_production";
+    if (!config.livePaymentsApproved()) return "live_keys_not_approved";
+  }
   return null;
 }
 

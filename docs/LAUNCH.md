@@ -58,7 +58,9 @@ environment.
 `test.arivoobjects.com` is a custom domain, so Vercel's preview login doesn't
 apply to it and Razorpay can deliver webhooks. It needs one DNS record at
 GoDaddy: **CNAME `test` → `53c2e563695e76c9.vercel-dns-017.com`**. It is
-marked `noindex` and only ever runs Razorpay test keys.
+marked `noindex` and only ever runs Razorpay test keys — the code refuses
+`rzp_live_` keys on every non-production deployment, even if
+`PAYMENTS_LIVE_APPROVED` is set there.
 
 ## 3. Resend — transactional email (free plan: 3,000/month, 100/day)
 

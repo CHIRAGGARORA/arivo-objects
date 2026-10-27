@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product } from "@/types/product";
-import { formatPrice } from "@/lib/products";
+import { formatPrice, isSellable } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 
 interface ProductInfoProps {
@@ -21,13 +21,14 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
   const router = useRouter();
 
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
+  const canPurchase = isSellable(product);
 
   function handleBuyNow() {
     // Sets (not adds) the quantity, so pressing Buy Now on something
     // already in the cart never silently duplicates it — then takes the
-    // person straight to the cart, since checkout isn't live yet.
+    // person straight to checkout.
     setLineQuantity(product, variantId, quantity);
-    router.push("/cart");
+    router.push("/checkout");
   }
 
   return (
@@ -40,7 +41,9 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
 
       {product.variants.length > 1 && (
         <fieldset className="mt-8">
-          <legend className="text-sm">Colour — {variant.label}</legend>
+          <legend className="text-sm">
+            {product.variantLabel ?? "Colour"} — {variant.label}
+          </legend>
           <div className="mt-3 flex gap-3">
             {product.variants.map((v) => (
               <button
@@ -87,7 +90,9 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         </div>
 
         <p className="text-xs text-charcoal/50">
-          {variant.inStock === false
+          {!canPurchase
+            ? "Coming soon"
+            : variant.inStock === false
             ? "Currently unavailable"
             : "Availability confirmed at checkout"}
         </p>
@@ -97,24 +102,33 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         <button
           type="button"
           onClick={() => addItem(product, variantId, quantity)}
-          className="flex-1 bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90"
+          disabled={!canPurchase}
+          className="flex-1 bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40"
         >
-          Add to cart
+          {canPurchase ? "Add to cart" : "Coming soon"}
         </button>
         <button
           type="button"
           onClick={handleBuyNow}
-          className="flex-1 border border-charcoal py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory"
-          title="Online checkout is not yet live"
+          disabled={!canPurchase}
+          className="flex-1 border border-charcoal py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-charcoal"
         >
           Buy now
         </button>
       </div>
 
-      <p className="mt-4 text-xs text-charcoal/50">
-        Each piece is individually cast. Marble patterns and, for the candle,
-        engraving depth vary naturally — no two pieces are exactly identical.
-      </p>
+      <ul className="mt-6 space-y-1.5 border-t border-sand/60 pt-5 text-xs text-charcoal/70">
+        <li>Free shipping on every order</li>
+        <li>Dispatched within 48 hours</li>
+        <li>No returns</li>
+      </ul>
+
+      {product.category === "tray" && (
+        <p className="mt-4 text-xs text-charcoal/50">
+          Each piece is individually cast. Marble patterns vary naturally — no two
+          pieces are exactly identical.
+        </p>
+      )}
     </div>
   );
 }

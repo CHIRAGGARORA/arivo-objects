@@ -26,7 +26,13 @@ function isCandleDetails(d: unknown): d is CandleDetails {
   return typeof d === "object" && d !== null && "waxType" in d;
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
+export default function ProductPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams: { variant?: string };
+}) {
   const product = getProductBySlug(params.slug);
   if (!product) notFound();
 
@@ -54,27 +60,32 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   return (
     <div className="py-12 md:py-16">
       <Container>
-        <ProductView product={product} />
+        <ProductView product={product} initialVariantId={searchParams.variant} />
 
         <div className="mx-auto mt-16 max-w-2xl md:mt-24">
           <ProductAccordion
             sections={[
               { title: "The Object", content: <p>{product.theObject}</p> },
               {
-                title: "Shipping",
+                title: "Shipping & Returns",
                 content: (
                   <p>
-                    Dispatch timelines and shipping partners are being finalised.
-                    See the{" "}
+                    Free shipping on every order, dispatched within 48 hours. We
+                    don&rsquo;t accept returns. If an item arrives damaged or
+                    incorrect, contact us. Full details on the{" "}
                     <a href="/shipping-returns" className="underline hover:no-underline">
                       Shipping &amp; Returns
                     </a>{" "}
-                    page for the latest information.
+                    page.
                   </p>
                 ),
               },
-              { title: "The Material", content: <p>{product.theMaterial}</p> },
-              { title: "The Process", content: <p>{product.theProcess}</p> },
+              ...(product.theMaterial
+                ? [{ title: "The Material", content: <p>{product.theMaterial}</p> }]
+                : []),
+              ...(product.theProcess
+                ? [{ title: "The Process", content: <p>{product.theProcess}</p> }]
+                : []),
               {
                 title: "Care",
                 content: (
@@ -97,10 +108,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                         <li>Wax: {candle.waxType ?? "To be confirmed"}</li>
                         <li>Fragrance: {candle.fragrance ?? "To be confirmed"}</li>
                         <li>Wick: {candle.wickType ?? "To be confirmed"}</li>
-                        <li>
-                          Approximate burn time:{" "}
-                          {candle.burnTimeHours ?? "Not yet available — pending burn testing"}
-                        </li>
+                        <li>Approximate burn time: {candle.burnTimeHours ?? "To be confirmed"}</li>
                       </>
                     )}
                   </ul>
@@ -112,13 +120,12 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                       title: "Candle Safety",
                       content: (
                         <p>
-                          This candle has not yet completed full burn and safety
-                          testing. It will not be offered for sale as a lit candle
-                          until that testing is complete. See{" "}
+                          Never leave a burning candle unattended, and keep it away
+                          from children, pets and flammable materials. See{" "}
                           <a href="/candle-safety" className="underline hover:no-underline">
                             Candle Safety
                           </a>{" "}
-                          for details.
+                          for more.
                         </p>
                       ),
                     },
@@ -126,12 +133,14 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                 : []),
             ]}
           />
-          <p className="mt-6 text-xs text-charcoal/50">
-            Handmade disclaimer: each piece is individually cast by hand. Marble
-            patterns naturally vary, and small surface characteristics such as
-            minor air pockets may occur. This is part of the handmade process,
-            not a defect.
-          </p>
+          {product.category === "tray" && (
+            <p className="mt-6 text-xs text-charcoal/50">
+              Handmade disclaimer: each piece is individually cast by hand. Marble
+              patterns naturally vary, and small surface characteristics such as
+              minor air pockets may occur. This is part of the handmade process,
+              not a defect.
+            </p>
+          )}
         </div>
 
         {related.length > 0 && (

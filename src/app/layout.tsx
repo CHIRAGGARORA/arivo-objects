@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { CartProvider } from "@/lib/cart-context";
 import { siteConfig } from "@/lib/siteConfig";
@@ -26,11 +27,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${siteConfig.brandName} — Design-led home objects`,
+    default: `${siteConfig.brandName} — Home decor & gifts`,
     template: `%s — ${siteConfig.brandName}`,
   },
   description:
-    "Handcrafted Jesmonite objects designed to bring form, texture and function into everyday spaces.",
+    "Design-led home decor and gifts: scented candle jar sets and marble trays. Free shipping, dispatched within 48 hours.",
   // No manual `icons` entry: src/app/icon.png (the Arivo mark) is picked up
   // automatically by Next.js's file-based favicon convention.
   openGraph: {
@@ -55,6 +56,7 @@ export default function RootLayout({
           >
             Skip to content
           </a>
+          <AnnouncementBar />
           <Header />
           <main id="main-content">{children}</main>
           <Footer />

@@ -140,60 +140,145 @@ export const products: Product[] = [
         colorSwatch: "#2B2A28",
         inStock: null,
         images: [
-          { src: "placeholder:tray-cloud-black-front", alt: "Large cloud-shaped marble tray, black marble, front view", isPlaceholder: true, role: "main" },
-          { src: "placeholder:tray-cloud-black-scale", alt: "Large cloud-shaped marble tray shown at scale on a table", isPlaceholder: true, role: "gallery" },
-          { src: "placeholder:tray-cloud-black-texture", alt: "Close-up of black marble texture on the large tray", isPlaceholder: true, role: "detail" },
-          { src: "placeholder:tray-cloud-black-lifestyle", alt: "Large cloud-shaped marble tray styled on a coffee table", isPlaceholder: true, role: "lifestyle" },
+          {
+            src: "/products/large-cloud-marble-tray/black-marble/main.jpg",
+            alt: "Large cloud-shaped marble tray in black marble, shown on a travertine surface",
+            isPlaceholder: false,
+            role: "main",
+          },
+          {
+            src: "/products/large-cloud-marble-tray/black-marble/gallery-1.jpg",
+            alt: "Large cloud-shaped marble tray styled with perfume, a watch and jewellery",
+            isPlaceholder: false,
+            role: "gallery",
+          },
+          {
+            src: "/products/large-cloud-marble-tray/black-marble/gallery-2.jpg",
+            alt: "Large cloud-shaped marble tray styled on a wood console with a mirror and jewellery",
+            isPlaceholder: false,
+            role: "gallery",
+          },
+          {
+            src: "/products/large-cloud-marble-tray/black-marble/detail.jpg",
+            alt: "Close-up of the black marble texture on the large cloud tray",
+            isPlaceholder: false,
+            role: "detail",
+          },
+          {
+            src: "/products/large-cloud-marble-tray/black-marble/lifestyle.jpg",
+            alt: "Large cloud-shaped marble tray styled with a lit candle and a small vase in a living room",
+            isPlaceholder: false,
+            role: "lifestyle",
+          },
         ],
       },
     ],
     featured: true,
   },
   {
-    slug: "flower-jesmonite-candle",
-    name: "Flower Jesmonite Candle",
+    slug: "scented-candle-jar-pack-of-4",
+    name: "Scented Candle Jar Set — Pack of 4",
     category: "candle",
-    price: 1499,
+    price: 899,
+    variantLabel: "Fragrance",
     shortDescription:
-      "A flower-engraved Jesmonite vessel, to eventually be sold complete with a sandalwood soy wax fill and cotton wick.",
+      "Four scented candle jars with lids, each in its own pattern and colour. Sandalwood fragrance — more fragrances coming soon.",
     theObject:
-      "A hand-finished Jesmonite vessel with an engraved flower motif, designed to be lit as a candle and, once finished, kept as a small object in its own right.",
-    theMaterial:
-      "The vessel is cast in Jesmonite, the same mineral composite used across the collection. The wax fill is planned as a sandalwood-scented soy wax with a cotton wick — final specifications are pending safety and burn testing.",
-    theProcess:
-      "The vessel is hand-cast and the flower detail hand-finished before the wax is poured. Marble pattern and engraving depth vary slightly from piece to piece.",
+      "A set of four patterned candle jars with lids, in blue, yellow, pink-and-teal and red. A set that works as a gift or as a small collection for your own shelf.",
+    // theMaterial / theProcess intentionally omitted until the maker supplies
+    // confirmed copy — the product page only shows sections that exist.
     details: {
-      material: "Jesmonite vessel (mineral composite)",
-      dimensions: null,
+      material: "Patterned jar with lid",
+      dimensions: null, // to be supplied by the maker
       weight: null,
       care: [
-        "Trim the wick to 5mm before each burn (once specifications are confirmed).",
-        "Keep away from drafts, children and pets while lit.",
+        "Trim the wick short before each burn.",
         "Never leave a burning candle unattended.",
+        "Keep away from children, pets, drafts and flammable materials.",
+        "Burn on a stable, heat-resistant surface.",
       ],
-      waxType: null, // e.g. "Soy wax" — pending final formulation
-      fragrance: null, // e.g. "Sandalwood" — pending final formulation
-      wickType: null, // e.g. "Cotton" — pending final confirmation
-      burnTimeHours: null, // NOT ESTIMATED — pending burn testing
-      fragranceLoadPercent: null, // pending final formulation
+      waxType: null,
+      fragrance: "Sandalwood",
+      wickType: null,
+      burnTimeHours: null,
+      fragranceLoadPercent: null,
       vesselReusable: true,
       safetyTested: false,
     } satisfies CandleDetails,
     variants: [
       {
-        id: "black-marble",
-        label: "Black Marble",
-        colorSwatch: "#2B2A28",
+        id: "sandalwood",
+        label: "Sandalwood",
+        colorSwatch: "#C8A27A",
         inStock: null,
         images: [
-          { src: "placeholder:candle-flower-black-unlit", alt: "Flower-engraved Jesmonite candle, black marble, unlit", isPlaceholder: true, role: "main" },
-          { src: "placeholder:candle-flower-black-lit", alt: "Flower-engraved Jesmonite candle, black marble, lit", isPlaceholder: true, role: "gallery" },
-          { src: "placeholder:candle-flower-black-engraving", alt: "Close-up of flower engraving detail on candle vessel", isPlaceholder: true, role: "detail" },
-          { src: "placeholder:candle-flower-black-lifestyle", alt: "The Arivo flower candle lit in a considered, low-light setting", isPlaceholder: true, role: "lifestyle" },
+          {
+            src: "/products/scented-candle-jar-pack-of-4/sandalwood/main.jpg",
+            alt: "A lit candle in a patterned yellow jar, styled with stones, a vase and flowers",
+            isPlaceholder: false,
+            role: "main",
+            aspect: "square",
+          },
+          {
+            src: "/products/scented-candle-jar-pack-of-4/sandalwood/gallery-1.jpg",
+            alt: "Patterned candle jars with lids in blue, yellow, pink-and-teal and red",
+            isPlaceholder: false,
+            role: "gallery",
+            aspect: "square",
+          },
         ],
       },
     ],
     featured: true,
+  },
+  {
+    slug: "mini-scented-candle-jar-pack-of-4",
+    name: "Mini Scented Candle Jar Set — Pack of 4",
+    category: "candle",
+    price: 500,
+    variantLabel: "Fragrance",
+    // Coming soon: no photos or dimensions yet. Flip `sellable` to true (and
+    // add real images) when it's ready to take orders.
+    sellable: false,
+    shortDescription:
+      "A smaller size of the four-jar candle set. Coming soon.",
+    theObject:
+      "A smaller version of the four-jar scented candle set, planned for launch soon.",
+    details: {
+      material: "Patterned jar with lid",
+      dimensions: null,
+      weight: null,
+      care: [
+        "Trim the wick short before each burn.",
+        "Never leave a burning candle unattended.",
+        "Keep away from children, pets, drafts and flammable materials.",
+        "Burn on a stable, heat-resistant surface.",
+      ],
+      waxType: null,
+      fragrance: "Sandalwood",
+      wickType: null,
+      burnTimeHours: null,
+      fragranceLoadPercent: null,
+      vesselReusable: true,
+      safetyTested: false,
+    } satisfies CandleDetails,
+    variants: [
+      {
+        id: "sandalwood",
+        label: "Sandalwood",
+        colorSwatch: "#C8A27A",
+        inStock: null,
+        images: [
+          {
+            src: "placeholder:mini-candle-jars",
+            alt: "Mini scented candle jar set — photos coming soon",
+            isPlaceholder: true,
+            role: "main",
+          },
+        ],
+      },
+    ],
+    featured: false,
   },
 ];
 
@@ -211,6 +296,11 @@ export function getRelatedProducts(slug: string, limit = 3): Product[] {
 
 export function formatPrice(price: number): string {
   return `₹${price.toLocaleString("en-IN")}`;
+}
+
+/** True unless a product has been explicitly marked not-yet-sellable. */
+export function isSellable(product: Product): boolean {
+  return product.sellable !== false;
 }
 
 /**

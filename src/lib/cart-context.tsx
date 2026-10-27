@@ -62,6 +62,8 @@ interface CartContextValue {
   setLineQuantity: (product: Product, variantId: string, quantity: number) => void;
   removeItem: (productSlug: string, variantId: string) => void;
   updateQuantity: (productSlug: string, variantId: string, quantity: number) => void;
+  /** Empties the cart — used once a payment is verified as captured. */
+  clearCart: () => void;
   subtotal: number;
   itemCount: number;
 }
@@ -170,6 +172,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [removeItem]
   );
 
+  const clearCart = useCallback(() => {
+    setLines([]);
+  }, []);
+
   const subtotal = useMemo(
     () => lines.reduce((sum, l) => sum + l.price * l.quantity, 0),
     [lines]
@@ -189,6 +195,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLineQuantity,
     removeItem,
     updateQuantity,
+    clearCart,
     subtotal,
     itemCount,
   };

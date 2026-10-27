@@ -10,27 +10,35 @@ export const metadata = pageMetadata({
 const faqs = [
   {
     q: "What is Jesmonite?",
-    a: "Jesmonite is a water-based mineral composite used to cast each Arivo object by hand. Read more on the Journal page, \"What Is Jesmonite?\"",
+    a: "Jesmonite is a water-based mineral composite used to cast our marble trays by hand. Read more on the Journal page, \"What Is Jesmonite?\"",
   },
   {
-    q: "Why does my piece look different from the photo?",
+    q: "Why does my tray look different from the photo?",
     a: "Marble patterns form during the pour and vary naturally from piece to piece. The photo shows a representative example of the colourway, not the exact piece you'll receive.",
   },
   {
-    q: "Is checkout available yet?",
-    a: "Not yet. Online payment is being set up. You can browse the collection and use the cart preview, but purchases cannot be completed on the site at this time.",
+    q: "How can I pay?",
+    a: "Checkout is processed securely through Razorpay, supporting UPI, cards and netbanking.",
   },
   {
-    q: "When will the candle be available with wax?",
-    a: "The complete candle (vessel, soy wax, sandalwood fragrance, cotton wick) will go on sale once burn and safety testing is finished. The Jesmonite vessel's specifications will be published once confirmed.",
+    q: "Which fragrances do the candle jars come in?",
+    a: "Sandalwood for now. More fragrances are coming soon.",
+  },
+  {
+    q: "How fast do you dispatch?",
+    a: "Orders are dispatched within 48 hours of payment.",
   },
   {
     q: "Do you ship across India?",
-    a: "Shipping details are being finalised — see the Shipping & Returns page for the latest information.",
+    a: "Yes, with free shipping on every order, dispatched within 48 hours. We don't accept returns. See the Shipping & Returns page for details, including what to do if an item arrives damaged or incorrect.",
   },
   {
-    q: "How do I care for my object?",
-    a: "Wipe clean with a soft, slightly damp cloth, avoid soaking in water, and keep out of prolonged direct sunlight. Full guidance is on each product page under \"Care\".",
+    q: "How do I use the FIRST5 coupon code?",
+    a: "Enter FIRST5 at checkout for 5% off your order. It can be applied by anyone and isn't currently restricted to a single use per customer.",
+  },
+  {
+    q: "How do I care for my tray?",
+    a: "Wipe clean with a soft, slightly damp cloth, avoid soaking in water, and keep out of prolonged direct sunlight. Care guidance for every product is on its page under \"Care\".",
   },
 ];
 

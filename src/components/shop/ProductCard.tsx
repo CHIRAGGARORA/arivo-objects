@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Product } from "@/types/product";
-import { formatPrice, getMainImage } from "@/lib/products";
+import { formatPrice, getMainImage, isSellable } from "@/lib/products";
 import { ProductPicture } from "@/components/ui/ProductPicture";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -13,7 +13,9 @@ export function ProductCard({ product }: { product: Product }) {
       />
       <div className="mt-4 flex items-baseline justify-between">
         <p className="text-sm">{product.name}</p>
-        <p className="text-sm text-charcoal/70">{formatPrice(product.price)}</p>
+        <p className="text-sm text-charcoal/70">
+          {isSellable(product) ? formatPrice(product.price) : "Coming soon"}
+        </p>
       </div>
     </Link>
   );

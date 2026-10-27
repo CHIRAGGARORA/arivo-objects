@@ -42,7 +42,7 @@ export interface SiteConfig {
 export const siteConfig: SiteConfig = {
   brandName: "ARIVO OBJECTS",
   legalName: null, // [BUSINESS_NAME_PENDING]
-  domain: "arivoobjects.com",
+  domain: "www.arivoobjects.com",
   email: null, // [BUSINESS_EMAIL_PENDING] — intended: hello@arivoobjects.com
   instagramHandle: "arivoobjects",
   instagramUrl: "https://www.instagram.com/arivoobjects/",
@@ -52,7 +52,12 @@ export const siteConfig: SiteConfig = {
   pan: null, // NEVER PUBLIC
   currency: "INR",
   currencySymbol: "₹",
-  paymentProvider: null, // [GATEWAY_PENDING] — planned: razorpay
+  // Razorpay is integrated (see /checkout, /api/razorpay/*). Whether this
+  // takes real money depends entirely on which Razorpay keys are set in the
+  // environment — test keys (rzp_test_...) never move real money, live
+  // keys (rzp_live_...) do. This flag just reflects which gateway the code
+  // is wired to, not whether it's in test or live mode.
+  paymentProvider: "razorpay",
   shippingProvider: null, // [SHIPPING_PROVIDER_PENDING]
   socials: {
     instagram: "https://www.instagram.com/arivoobjects/",

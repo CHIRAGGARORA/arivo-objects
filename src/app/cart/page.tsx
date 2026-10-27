@@ -1,105 +1,12 @@
-"use client";
+import { CartPageContent } from "@/components/cart/CartPageContent";
+import { pageMetadata } from "@/lib/seo";
 
-import Link from "next/link";
-import Image from "next/image";
-import { Container } from "@/components/ui/Container";
-import { useCart } from "@/lib/cart-context";
-import { formatPrice } from "@/lib/products";
-import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
-import { isPlaceholderKey } from "@/lib/placeholderLabels";
+export const metadata = pageMetadata({
+  title: "Cart",
+  description: "Review the items in your Arivo Objects cart.",
+  path: "/cart",
+});
 
 export default function CartPage() {
-  const { lines, removeItem, updateQuantity, subtotal } = useCart();
-
-  return (
-    <div className="py-16 md:py-24">
-      <Container className="max-w-3xl">
-        <h1 className="font-display text-3xl md:text-5xl">Cart</h1>
-
-        {lines.length === 0 ? (
-          <div className="mt-16 flex flex-col items-center py-10 text-center">
-            <p className="text-sm text-charcoal/60">Your cart is empty.</p>
-            <Link
-              href="/shop"
-              className="mt-6 inline-block border border-charcoal px-7 py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory"
-            >
-              Continue shopping
-            </Link>
-          </div>
-        ) : (
-          <div className="mt-10">
-            <ul className="divide-y divide-sand/60 border-y border-sand/60">
-              {lines.map((line) => (
-                <li key={`${line.productSlug}-${line.variantId}`} className="flex gap-5 py-6">
-                  <div className="h-28 w-28 shrink-0 overflow-hidden bg-bone">
-                    {isPlaceholderKey(line.image) ? (
-                      <PlaceholderImage alt={`${line.name}, ${line.variantLabel}`} aspect="square" />
-                    ) : (
-                      <div className="relative h-full w-full">
-                        <Image src={line.image} alt={line.name} fill className="object-cover" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div className="flex items-baseline justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{line.name}</p>
-                        <p className="text-xs text-charcoal/60">{line.variantLabel}</p>
-                      </div>
-                      <p className="text-sm">{formatPrice(line.price * line.quantity)}</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center border border-sand">
-                        <button
-                          className="px-3 py-1.5 text-sm"
-                          onClick={() =>
-                            updateQuantity(line.productSlug, line.variantId, line.quantity - 1)
-                          }
-                          aria-label={`Decrease quantity of ${line.name}`}
-                        >
-                          –
-                        </button>
-                        <span className="px-3 text-sm">{line.quantity}</span>
-                        <button
-                          className="px-3 py-1.5 text-sm"
-                          onClick={() =>
-                            updateQuantity(line.productSlug, line.variantId, line.quantity + 1)
-                          }
-                          aria-label={`Increase quantity of ${line.name}`}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <button
-                        className="text-xs text-charcoal/50 underline hover:text-charcoal"
-                        onClick={() => removeItem(line.productSlug, line.variantId)}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-8 flex items-center justify-between text-base">
-              <span>Subtotal</span>
-              <span>{formatPrice(subtotal)}</span>
-            </div>
-
-            <button
-              disabled
-              className="mt-6 w-full bg-charcoal py-4 text-sm tracking-wide text-ivory opacity-40 sm:w-auto sm:px-10"
-              title="Online checkout is not yet live"
-            >
-              Online checkout coming soon
-            </button>
-            <p className="mt-3 text-xs text-charcoal/50">
-              Payment is not yet available. This cart is a preview of the shopping experience.
-            </p>
-          </div>
-        )}
-      </Container>
-    </div>
-  );
+  return <CartPageContent />;
 }

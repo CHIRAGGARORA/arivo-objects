@@ -11,7 +11,7 @@ interface PageSeoOptions {
 }
 
 const DEFAULT_DESCRIPTION =
-  "Handcrafted Jesmonite objects designed to bring form, texture and function into everyday spaces.";
+  "Design-led home decor and gifts: scented candle jar sets and marble trays. Free shipping, dispatched within 48 hours.";
 
 const DEFAULT_OG_IMAGE = "/brand/arivo-og.png";
 
@@ -25,7 +25,12 @@ export function pageMetadata({
   const fullTitle = title === siteConfig.brandName ? title : `${title} — ${siteConfig.brandName}`;
 
   return {
-    title: fullTitle,
+    // `absolute` deliberately bypasses the root layout's title template
+    // (`%s — ARIVO OBJECTS`). fullTitle above already appends the brand
+    // suffix itself, so without `absolute` the template appended a SECOND
+    // suffix on top ("Shop — ARIVO OBJECTS — ARIVO OBJECTS"). This keeps
+    // the exact same final title text, just applied once.
+    title: { absolute: fullTitle },
     description,
     alternates: { canonical: url },
     openGraph: {

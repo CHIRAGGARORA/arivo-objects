@@ -21,9 +21,26 @@ import { getGalleryImages, getLifestyleImage } from "@/lib/products";
  * which is why changing colour updated the swatch and the cart correctly
  * but never updated the visible gallery. Lifting the state here fixes that
  * at the source rather than patching around it.
+ *
+ * `initialVariantId` lets a link (e.g. the homepage's colourway section)
+ * deep-link straight to a specific variant via ?variant=<id>. It's read
+ * once, server-side, by the page and passed in here — if it doesn't match
+ * a real variant id for this product, this falls back to the first variant
+ * exactly as before, so normal /products/<slug> links are unaffected.
  */
-export function ProductView({ product }: { product: Product }) {
-  const [variantId, setVariantId] = useState(product.variants[0].id);
+export function ProductView({
+  product,
+  initialVariantId,
+}: {
+  product: Product;
+  initialVariantId?: string;
+}) {
+  const startingVariantId =
+    initialVariantId && product.variants.some((v) => v.id === initialVariantId)
+      ? initialVariantId
+      : product.variants[0].id;
+
+  const [variantId, setVariantId] = useState(startingVariantId);
 
   const selectedVariant =
     product.variants.find((v) => v.id === variantId) ?? product.variants[0];

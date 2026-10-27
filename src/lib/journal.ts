@@ -28,7 +28,7 @@ export const journalArticles: JournalArticle[] = [
       "Marble patterns form during the pour, not after — which is why no two pieces are identical.",
     readingTime: "2 min read",
     body: [
-      "The marbling on an ARIVO tray or candle vessel isn't printed, stamped, or painted on. It happens during the pour, when pigmented Jesmonite is introduced into the base mix and swirled by hand before it sets.",
+      "The marbling on an ARIVO tray isn't printed, stamped, or painted on. It happens during the pour, when pigmented Jesmonite is introduced into the base mix and swirled by hand before it sets.",
       "That means the exact pattern is never fully repeatable. Two trays cast from the same mould, in the same colourway, on the same day, will still carry slightly different marbling.",
       "We see this as part of the object rather than a flaw to correct. It's also why we ask you to expect natural variation — in the marbling, and occasionally in small surface characteristics like minor air pockets — rather than a uniform, mass-produced finish.",
     ],
@@ -49,14 +49,13 @@ export const journalArticles: JournalArticle[] = [
   {
     slug: "how-to-care-for-jesmonite",
     title: "How to Care for Jesmonite",
-    excerpt: "Simple care guidance to keep a Jesmonite tray or vessel looking the way it should.",
+    excerpt: "Simple care guidance to keep a Jesmonite tray looking the way it should.",
     readingTime: "2 min read",
     body: [
       "Jesmonite objects are low-maintenance, but a few habits will keep them looking their best for longer.",
       "Wipe clean with a soft, slightly damp cloth. Avoid soaking pieces in water or leaving them fully submerged, since prolonged water exposure isn't recommended for this material.",
       "Keep pieces out of prolonged direct sunlight, which can affect colour over time — especially on pigmented or marbled surfaces.",
       "Avoid contact with sharp or abrasive objects, which can scratch the finished surface.",
-      "For candle vessels specifically, allow the vessel to cool fully before cleaning out any remaining wax, and avoid using abrasive tools that could damage the engraved detail.",
     ],
   },
   {
@@ -66,8 +65,8 @@ export const journalArticles: JournalArticle[] = [
     readingTime: "3 min read",
     body: [
       "Every ARIVO object starts as a question about material and form, not a product brief. What does this material want to do, and what shape lets it do that honestly?",
-      "Jesmonite pours and marbles in a particular way — it doesn't hold sharp edges the way resin can, but it takes soft, architectural curves very well. The oval tray, the abstract cloud shape, and the flower-engraved candle vessel all came from working with that tendency rather than against it.",
-      "Function comes after form is settled, not before. A tray needs a rim that holds objects without dominating the design; a candle vessel needs to hold heat and wax safely while still carrying the engraved detail. Those constraints get folded in once the object's core shape already feels right.",
+      "Jesmonite pours and marbles in a particular way — it doesn't hold sharp edges the way resin can, but it takes soft, architectural curves very well. The oval tray and the abstract cloud shape both came from working with that tendency rather than against it.",
+      "Function comes after form is settled, not before. A tray needs a rim that holds objects without dominating the design. Those constraints get folded in once the object's core shape already feels right.",
       "The result is meant to sit somewhere between a functional object and a small sculptural piece — usable, but not only that.",
     ],
   },

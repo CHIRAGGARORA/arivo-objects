@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/products";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
@@ -111,15 +112,24 @@ export function CartDrawer() {
             <span>Subtotal</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
-          <button
-            disabled={lines.length === 0}
-            className="w-full bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:opacity-40"
-            title="Online checkout is not yet live"
-          >
-            Online checkout coming soon
-          </button>
+          {lines.length === 0 ? (
+            <button
+              disabled
+              className="w-full bg-charcoal py-3 text-sm tracking-wide text-ivory opacity-40"
+            >
+              Checkout
+            </button>
+          ) : (
+            <Link
+              href="/checkout"
+              onClick={closeCart}
+              className="block w-full bg-charcoal py-3 text-center text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90"
+            >
+              Checkout
+            </Link>
+          )}
           <p className="mt-3 text-center text-xs text-charcoal/50">
-            Payment is not yet available. This cart is a preview of the shopping experience.
+            Payment is processed securely by Razorpay.
           </p>
         </div>
       </aside>

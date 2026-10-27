@@ -45,8 +45,8 @@ environment.
    - `RAZORPAY_KEY_ID` = the `rzp_test_…` key id
    - `RAZORPAY_KEY_SECRET` = the test key secret
 3. Test mode → Account & Settings → **Webhooks** → **Add New Webhook**:
-   - URL: `https://<your preview URL>/api/webhooks/razorpay`
-     (use the stable branch URL Vercel shows for `launch-test`)
+   - URL: `https://test.arivoobjects.com/api/webhooks/razorpay`
+     (`test.arivoobjects.com` serves the `launch-test` branch only)
    - Secret: generate a fresh random string (not your key secret) and put the
      same value in Vercel as `RAZORPAY_WEBHOOK_SECRET`
    - Active events — **only these four**: `payment.authorized`,
@@ -55,12 +55,10 @@ environment.
    capture is recommended. (If authorisation-only is left on, the server
    captures verified payments itself before fulfilment.)
 
-Preview deployments are behind Vercel login, so Razorpay can't deliver
-webhooks to them until you allow it: Vercel → Settings → **Deployment
-Protection** → **Protection Bypass for Automation** → create a secret, then
-append `?x-vercel-protection-bypass=<that secret>` to the webhook URL in
-Razorpay. (Production custom domains aren't protected, so this is
-preview-only.)
+`test.arivoobjects.com` is a custom domain, so Vercel's preview login doesn't
+apply to it and Razorpay can deliver webhooks. It needs one DNS record at
+GoDaddy: **CNAME `test` → `53c2e563695e76c9.vercel-dns-017.com`**. It is
+marked `noindex` and only ever runs Razorpay test keys.
 
 ## 3. Resend — transactional email (free plan: 3,000/month, 100/day)
 
@@ -107,9 +105,9 @@ and pickup stay manual** in the Shiprocket dashboard.
 | Variable | Value |
 |---|---|
 | `ADMIN_PASSWORD` | strong password ≥ 12 chars — `/admin` login, user `admin` |
-| `CRON_SECRET` | random ≥ 16 chars — protects the daily retry job |
-| `IP_HASH_SALT` | random string |
-| `SITE_URL` | `https://www.arivoobjects.com` in Production; the preview URL in Preview |
+| `CRON_SECRET` | Production only: random ≥ 16 chars — protects the daily retry job (Vercel runs crons on production only) |
+| `IP_HASH_SALT` | optional random string (defaults to a value derived from the webhook secret) |
+| `SITE_URL` | `https://www.arivoobjects.com` in Production (already set to `https://test.arivoobjects.com` for `launch-test`) |
 | `PREVIEW_SELLABLE_VARIANTS` | Preview only, e.g. `small-oval-marble-tray/black-marble` — lets you test-buy without enabling sales on the live site. Ignored in Production and with live keys. |
 
 Then open `/admin` → **Stock** and enter a quantity for the variant(s) you

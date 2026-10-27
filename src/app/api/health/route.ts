@@ -1,6 +1,6 @@
 import { config, deployEnv, integrationStatus } from "@/lib/server/config";
 import { isAdminAuthorized } from "@/lib/server/admin-auth";
-import { query } from "@/lib/server/db";
+import { query, withTransaction } from "@/lib/server/db";
 import { pingRazorpay } from "@/lib/server/razorpay";
 import { listPickupLocations, shiprocketConfigured } from "@/lib/server/shiprocket";
 import { json } from "@/lib/server/http";
@@ -42,6 +42,38 @@ export async function GET(req: Request) {
       );
       return `migrations: ${migrations.map((m) => m.name).join(", ") || "none"}; tables: ${tables.length}`;
     });
+    checks.records = await check(async () => {
+      const [r] = await query<Record<string, string>>(
+        `SELECT (SELECT count(*) FROM orders) AS orders,
+                (SELECT count(*) FROM orders WHERE status = 'paid') AS paid_orders,
+                (SELECT count(*) FROM order_tasks WHERE status IN ('failed', 'needs_attention')) AS tasks_needing_attention,
+                (SELECT count(*) FROM payment_events) AS payment_events,
+                (SELECT count(*) FROM contact_messages) AS contact_messages,
+                (SELECT count(*) FROM newsletter_subscribers) AS newsletter_subscribers`
+      );
+      return Object.entries(r).map(([k, v]) => `${k}=${v}`).join(", ");
+    });
+    if (deployEnv() !== "production") {
+      // Proves writes work end to end without leaving data behind.
+      checks.writeRollback = await check(async () => {
+        const rollback = new Error("rollback");
+        try {
+          await withTransaction(async (c) => {
+            const row = (
+              await c.query<{ id: number }>(
+                "INSERT INTO contact_messages (name, email, message) VALUES ('health check', 'health@example.invalid', 'write test — rolled back') RETURNING id"
+              )
+            ).rows[0];
+            const back = await c.query("SELECT 1 FROM contact_messages WHERE id = $1", [row.id]);
+            if (back.rowCount !== 1) throw new Error("inserted row not readable");
+            throw rollback; // withTransaction rolls back on any throw
+          });
+        } catch (err) {
+          if (err !== rollback) throw err;
+        }
+        return "insert + read-back succeeded, then rolled back";
+      });
+    }
     checks.inventory = await check(async () => {
       const rows = await query<{ product_slug: string; variant_id: string; quantity: number }>(
         "SELECT product_slug, variant_id, quantity FROM inventory ORDER BY 1, 2"

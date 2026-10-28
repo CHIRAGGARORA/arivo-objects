@@ -186,14 +186,14 @@ export const products: Product[] = [
     price: 899,
     variantLabel: "Fragrance",
     shortDescription:
-      "Four scented candle jars with lids, each in its own pattern and colour. Sandalwood fragrance — more fragrances coming soon.",
+      "Four sandalwood-scented soy wax candles, 130 ml each, in patterned jars with lids — every jar a different colour. A ready-made gift set.",
     theObject:
-      "A set of four patterned candle jars with lids, in blue, yellow, pink-and-teal and red. A set that works as a gift or as a small collection for your own shelf.",
+      "Four candle jars with lids, each in its own pattern — sky blue, mustard yellow, pink-and-teal and red. Every jar is filled with 130 ml of soy wax scented with warm, woody sandalwood. Give the set as a housewarming, festive or birthday gift, or split it across rooms at home. Once the candle is finished, the patterned jar can be reused for jewellery, matches or small trinkets. Props shown in the photos are for styling only; you receive the four candle jars with lids.",
     // theMaterial / theProcess intentionally omitted until the maker supplies
     // confirmed copy — the product page only shows sections that exist.
     details: {
-      material: "Patterned jar with lid",
-      dimensions: null, // to be supplied by the maker
+      material: "Printed metal tin with lid",
+      dimensions: "Each jar approx. 7.2 cm wide × 5 cm tall (set of 4)",
       weight: null,
       care: [
         "Trim the wick short before each burn.",
@@ -201,7 +201,7 @@ export const products: Product[] = [
         "Keep away from children, pets, drafts and flammable materials.",
         "Burn on a stable, heat-resistant surface.",
       ],
-      waxType: null,
+      waxType: "Soy wax, 130 ml per jar",
       fragrance: "Sandalwood",
       wickType: null,
       burnTimeHours: null,
@@ -218,10 +218,29 @@ export const products: Product[] = [
         sellable: true, // approved by owner for launch (still needs stock in /admin)
         images: [
           {
+            src: "/products/scented-candle-jar-pack-of-4/sandalwood/styled-row.webp",
+            alt: "Four lit sandalwood candles in blue, yellow, pink-and-teal and red patterned jars on linen, with sandalwood sticks and rose petals",
+            isPlaceholder: false,
+            role: "main",
+          },
+          {
+            src: "/products/scented-candle-jar-pack-of-4/sandalwood/styled-evening.webp",
+            alt: "The four patterned candle jars lit on a wooden side table beside a sofa, with chai, a book and incense",
+            isPlaceholder: false,
+            role: "gallery",
+          },
+          {
+            src: "/products/scented-candle-jar-pack-of-4/sandalwood/styled-flatlay.webp",
+            alt: "Top-down view of the four open candle jars with their patterned lids, cream soy wax and sandalwood pieces",
+            isPlaceholder: false,
+            role: "gallery",
+            aspect: "square",
+          },
+          {
             src: "/products/scented-candle-jar-pack-of-4/sandalwood/main.jpg",
             alt: "A lit candle in a patterned yellow jar, styled with stones, a vase and flowers",
             isPlaceholder: false,
-            role: "main",
+            role: "gallery",
             aspect: "square",
           },
           {

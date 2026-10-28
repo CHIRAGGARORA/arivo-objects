@@ -145,6 +145,8 @@ export function customerConfirmationEmail(d: OrderEmailData): Omit<EmailMessage,
   const brand = siteConfig.brandName;
   return {
     to: d.customerEmail,
+    // Sent from a send-only address; customer replies go to the real inbox.
+    ...(siteConfig.email && { replyTo: siteConfig.email }),
     subject: `${brand} — order ${d.orderNumber} confirmed`,
     html: wrap(`<h2 style="font-weight:normal">Thank you, ${escapeHtml(d.customerName)}.</h2>
 <p>We've received your payment for order <strong>${escapeHtml(d.orderNumber)}</strong>.</p>

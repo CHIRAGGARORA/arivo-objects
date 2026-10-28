@@ -23,7 +23,7 @@ export interface SiteConfig {
   brandName: string;
   legalName: string | null; // e.g. "Arivo Objects Pvt Ltd" or proprietor name — PENDING
   domain: string;
-  email: string | null; // hello@arivoobjects.com once the mailbox exists
+  email: string | null; // public contact address (Zoho Mail alias on the owner's mailbox)
   instagramHandle: string | null; // e.g. "arivoobjects" — set once confirmed
   instagramUrl: string | null;
   phone: string | null; // NEVER a personal number — business line only, PENDING
@@ -65,7 +65,7 @@ export const siteConfig: SiteConfig = {
   brandName: "ARIVO OBJECTS",
   legalName: null, // [BUSINESS_NAME_PENDING]
   domain: "www.arivoobjects.com",
-  email: null, // [BUSINESS_EMAIL_PENDING] — intended: hello@arivoobjects.com
+  email: "hello@arivoobjects.com",
   instagramHandle: "arivoobjects",
   instagramUrl: "https://www.instagram.com/arivoobjects/",
   phone: null, // [PHONE_PENDING] — do not substitute a personal number

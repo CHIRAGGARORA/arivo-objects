@@ -50,6 +50,12 @@ export interface SiteConfig {
     transitDays: { min: number; max: number }; // dispatch → doorstep
     orderCutoffIst: string; // "HH:MM", orders after this count from the next working day
   };
+  /**
+   * No change-of-mind returns. Damaged, defective or wrong items must be
+   * reported within this many days of delivery. Must match Merchant Center's
+   * return policy; the policy pages and product structured data read it here.
+   */
+  damageClaimDays: number;
   socials: {
     instagram: string | null;
   };
@@ -80,6 +86,7 @@ export const siteConfig: SiteConfig = {
     transitDays: { min: 3, max: 7 },
     orderCutoffIst: "12:00",
   },
+  damageClaimDays: 7,
   socials: {
     instagram: "https://www.instagram.com/arivoobjects/",
   },

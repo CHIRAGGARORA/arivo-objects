@@ -38,9 +38,11 @@ export default function ShippingReturnsPage() {
             <h2 className="font-display text-xl text-charcoal">Damaged or incorrect items</h2>
             <p className="mt-2">
               If your order arrives damaged, defective, or different from
-              what you ordered, please contact us promptly after delivery
-              with your order details and photos of the item, and we&rsquo;ll
-              make it right.
+              what you ordered, contact us within{" "}
+              <strong>{siteConfig.damageClaimDays} days of delivery</strong>{" "}
+              with your order details and photos of the item and packaging,
+              and we&rsquo;ll replace it or refund you at no cost. Reports made
+              after {siteConfig.damageClaimDays} days can&rsquo;t be accepted.
             </p>
           </section>
         </div>

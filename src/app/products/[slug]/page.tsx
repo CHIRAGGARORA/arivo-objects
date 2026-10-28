@@ -96,10 +96,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           },
         },
       }),
+      // Only damaged, defective or wrong items, reported within the claim
+      // window, at no cost to the customer. No change-of-mind returns.
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
         applicableCountry: "IN",
-        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: siteConfig.damageClaimDays,
+        itemDefectReturnFees: "https://schema.org/FreeReturn",
       },
     },
     // Only real, approved verified-buyer reviews — omitted entirely when none exist.
@@ -141,8 +145,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 content: (
                   <p>
                     Free shipping on every order, dispatched within 48 hours. We
-                    don&rsquo;t accept returns. If an item arrives damaged or
-                    incorrect, contact us. Full details on the{" "}
+                    don&rsquo;t accept change-of-mind returns. If an item arrives
+                    damaged or incorrect, contact us within{" "}
+                    {siteConfig.damageClaimDays} days of delivery. Full details on the{" "}
                     <a href="/shipping-returns" className="underline hover:no-underline">
                       Shipping &amp; Returns
                     </a>{" "}

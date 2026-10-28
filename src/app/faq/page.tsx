@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { pageMetadata } from "@/lib/seo";
+import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata = pageMetadata({
   title: "FAQ",
@@ -48,11 +49,11 @@ const sections: { title: string; items: Faq[] }[] = [
       },
       {
         q: "What if my order arrives damaged or incorrect?",
-        a: "Contact us promptly after delivery with your order number and photos of the item and packaging, and we'll make it right. Details are on our Shipping & Returns page.",
+        a: `Contact us within ${siteConfig.damageClaimDays} days of delivery with your order number and photos of the item and packaging, and we'll replace it or refund you at no cost. Details are on our Shipping & Returns page.`,
       },
       {
         q: "Do you accept returns?",
-        a: "We don't accept returns or exchanges for change of mind, so please choose carefully. Damaged, defective or incorrect items are always covered.",
+        a: `We don't accept returns or exchanges for change of mind, so please choose carefully. Damaged, defective or incorrect items are covered when reported within ${siteConfig.damageClaimDays} days of delivery.`,
       },
     ],
   },

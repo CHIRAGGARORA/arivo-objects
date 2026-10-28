@@ -203,7 +203,7 @@ export const products: Product[] = [
       ],
       waxType: "Soy wax, 130 ml per jar",
       fragrance: "Sandalwood",
-      wickType: null,
+      wickType: "Cotton",
       burnTimeHours: null,
       fragranceLoadPercent: null,
       vesselReusable: true,

@@ -87,6 +87,10 @@ export interface JournalArticle {
   excerpt: string;
   body: string[]; // paragraphs
   readingTime: string;
-  category: "Candles" | "Material" | "Care" | "Gifting";
+  category: "Candles" | "Material" | "Care" | "Gifting" | "Styling";
   cover: { src: string; alt: string };
+  /** Product slugs shown as "Shop this story" cards at the end of the article. */
+  products?: string[];
+  /** YYYY-MM-DD, used in search-engine article data. */
+  published?: string;
 }

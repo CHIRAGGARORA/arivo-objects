@@ -2,8 +2,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { ProductPicture } from "@/components/ui/ProductPicture";
+import { ProductCard } from "@/components/shop/ProductCard";
 import { journalArticles, getArticleBySlug } from "@/lib/journal";
-import { pageMetadata } from "@/lib/seo";
+import { getProductBySlug } from "@/lib/products";
+import { pageMetadata, SITE_URL } from "@/lib/seo";
+import { siteConfig } from "@/lib/siteConfig";
+import { Product } from "@/types/product";
+
+// Prebuilt; refreshed in the background so "Shop this story" sold-out badges stay current.
+export const revalidate = 300;
 
 export function generateStaticParams() {
   return journalArticles.map((a) => ({ slug: a.slug }));
@@ -17,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: article.title,
     description: article.excerpt,
     path: `/journal/${article.slug}`,
+    image: article.cover.src,
   });
 }
 
@@ -26,9 +34,26 @@ export default async function JournalArticlePage({ params }: { params: Promise<{
   if (!article) notFound();
   const more = journalArticles.filter((a) => a.slug !== article.slug && a.category === article.category).slice(0, 2);
   const others = more.length ? more : journalArticles.filter((a) => a.slug !== article.slug).slice(0, 2);
+  const featured = (article.products ?? []).map(getProductBySlug).filter((p): p is Product => Boolean(p));
+  const trayLed = article.category === "Material" || article.category === "Care" || article.category === "Styling";
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: article.title,
+    description: article.excerpt,
+    image: `${SITE_URL}${article.cover.src}`,
+    url: `${SITE_URL}/journal/${article.slug}`,
+    mainEntityOfPage: `${SITE_URL}/journal/${article.slug}`,
+    ...(article.published && { datePublished: article.published }),
+    author: { "@type": "Organization", name: siteConfig.brandName, url: SITE_URL },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    inLanguage: "en-IN",
+  };
 
   return (
     <article className="py-16 md:py-24">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <Container className="max-w-3xl">
         <Link href="/journal" className="text-xs font-medium uppercase tracking-luxe text-charcoal/60 hover:text-charcoal">
           &larr; Journal
@@ -47,14 +72,25 @@ export default async function JournalArticlePage({ params }: { params: Promise<{
           ))}
         </div>
         <div className="mt-14 flex flex-wrap gap-3 border-t border-sand/70 pt-10">
-          <Link href={article.category === "Material" || article.category === "Care" ? "/shop?category=tray" : "/shop?category=candle"} className="btn-primary">
-            {article.category === "Material" ? "Shop the trays" : article.category === "Care" ? "Shop the collection" : "Shop the candles"}
+          <Link href={trayLed ? "/shop?category=tray" : "/shop?category=candle"} className="btn-primary">
+            {article.category === "Care" ? "Shop the collection" : trayLed ? "Shop the trays" : "Shop the candles"}
           </Link>
           <Link href="/faq" className="btn-outline">
             Read the FAQ
           </Link>
         </div>
       </Container>
+
+      {featured.length > 0 && (
+        <Container className="mt-20 max-w-5xl">
+          <h2 className="text-3xl">Shop this story</h2>
+          <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3">
+            {featured.map((p) => (
+              <ProductCard key={p.slug} product={p} />
+            ))}
+          </div>
+        </Container>
+      )}
 
       <Container className="mt-20 max-w-5xl">
         <h2 className="text-3xl">Keep reading</h2>

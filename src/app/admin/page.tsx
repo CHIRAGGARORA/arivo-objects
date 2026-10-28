@@ -203,9 +203,6 @@ export default async function AdminPage() {
               {r.city ? `, ${r.city}` : ""} · {r.order_number ? `order ${r.order_number}` : SOURCE_LABEL[r.source]} · {when(r.created_at)}{" "}
               <Badge tone={r.status === "approved" ? "ok" : r.status === "rejected" ? "muted" : "warn"}>{r.status}</Badge>
               <p className="mt-1 whitespace-pre-wrap text-charcoal/80">{r.body}</p>
-              {r.order_status === "refunded" && r.status === "approved" && (
-                <p className="mt-1 text-xs text-amber-800">Hidden on the website: this order was refunded.</p>
-              )}
               {r.status === "pending" && <ReviewModeration reviewId={Number(r.id)} />}
               {r.status === "approved" && <ReviewModeration reviewId={Number(r.id)} approved />}
             </li>

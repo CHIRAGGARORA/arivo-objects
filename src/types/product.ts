@@ -81,4 +81,6 @@ export interface JournalArticle {
   excerpt: string;
   body: string[]; // paragraphs
   readingTime: string;
+  category: "Candles" | "Material" | "Care" | "Gifting";
+  cover: { src: string; alt: string };
 }

@@ -76,6 +76,15 @@ export const newsletterSchema = z.object({
 
 export { MAX_QTY_PER_LINE };
 
+export const reviewSchema = z.object({
+  token: z.string().max(64),
+  productSlug: z.string().max(100),
+  rating: z.number().int().min(1, "Choose a star rating").max(5),
+  body: text(10, 1000, "Your review"),
+  authorName: text(1, 40, "Your name"),
+  website: z.string().max(0).optional(), // honeypot
+});
+
 export function fieldErrors(err: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of err.issues) {

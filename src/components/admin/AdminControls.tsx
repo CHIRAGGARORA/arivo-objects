@@ -60,3 +60,32 @@ export function StockForm({ slug, variantId, quantity }: { slug: string; variant
     </form>
   );
 }
+
+export function ReviewModeration({ reviewId }: { reviewId: number }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  async function act(action: "approve" | "reject") {
+    setBusy(true);
+    const res = await fetch(`/api/admin/reviews/${reviewId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ action }),
+    });
+    setBusy(false);
+    if (!res.ok) return setMsg(`Error ${res.status}`);
+    router.refresh();
+  }
+  return (
+    <span className="mt-2 inline-flex items-center gap-2">
+      <button type="button" disabled={busy} onClick={() => act("approve")} className="border border-charcoal bg-charcoal px-3 py-1 text-xs text-ivory disabled:opacity-50">
+        Approve
+      </button>
+      <button type="button" disabled={busy} onClick={() => act("reject")} className="border border-charcoal px-3 py-1 text-xs disabled:opacity-50">
+        Reject
+      </button>
+      {msg && <span className="text-xs">{msg}</span>}
+    </span>
+  );
+}

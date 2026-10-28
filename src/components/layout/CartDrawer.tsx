@@ -1,7 +1,7 @@
 "use client";
 
 import { useCart } from "@/lib/cart-context";
-import { formatPrice } from "@/lib/products";
+import { formatPrice, cartLineImage } from "@/lib/products";
 import { PlaceholderImage } from "@/components/ui/PlaceholderImage";
 import { isPlaceholderKey } from "@/lib/placeholderLabels";
 import Image from "next/image";
@@ -57,11 +57,11 @@ export function CartDrawer() {
               {lines.map((line) => (
                 <li key={`${line.productSlug}-${line.variantId}`} className="flex gap-4">
                   <div className="h-20 w-20 shrink-0 overflow-hidden bg-bone">
-                    {isPlaceholderKey(line.image) ? (
+                    {isPlaceholderKey(cartLineImage(line.productSlug, line.variantId, line.image)) ? (
                       <PlaceholderImage alt={`${line.name}, ${line.variantLabel}`} aspect="square" />
                     ) : (
                       <div className="relative h-full w-full">
-                        <Image src={line.image} alt={line.name} fill className="object-cover" />
+                        <Image src={cartLineImage(line.productSlug, line.variantId, line.image)} alt={line.name} fill className="object-cover" />
                       </div>
                     )}
                   </div>

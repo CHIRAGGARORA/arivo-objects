@@ -2,6 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import type { PoolClient } from "pg";
 import { ensureDatabaseEnvironment, query, withTransaction } from "./db";
+import { reviewableItems } from "./reviews";
 import { CartError, CartItemInput, priceCart } from "./catalog";
 import { CouponError } from "./coupons";
 import {
@@ -449,6 +450,8 @@ export interface PublicOrderView {
   firstName: string;
   createdAt: string;
   shipment: { awbCode: string | null; courierName: string | null } | null;
+  /** Paid orders only: products the customer can review from this page. */
+  reviewable: { productSlug: string; name: string; reviewed: boolean }[];
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -501,6 +504,7 @@ export async function getOrderByPublicToken(token: string): Promise<PublicOrderV
     firstName: order.shipping_address.name.split(/\s+/)[0],
     createdAt: order.created_at.toISOString(),
     shipment: ship?.result ? { awbCode: ship.result.awbCode ?? null, courierName: ship.result.courierName ?? null } : null,
+    reviewable: order.status === "paid" ? await reviewableItems(order.id) : [],
   };
 }
 

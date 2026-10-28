@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/products";
 import { siteConfig } from "@/lib/siteConfig";
+import { ReviewForm } from "@/components/reviews/ReviewForm";
 
 interface OrderView {
   orderNumber: string;
@@ -16,6 +17,7 @@ interface OrderView {
   totalPaise: number;
   firstName: string;
   shipment: { awbCode: string | null; courierName: string | null } | null;
+  reviewable: { productSlug: string; name: string; reviewed: boolean }[];
 }
 
 const POLL_MS = 3000;
@@ -141,6 +143,22 @@ export function OrderStatus({ token }: { token: string }) {
         <div className="flex justify-between"><dt>Shipping</dt><dd>{order.shippingPaise ? formatPrice(order.shippingPaise / 100) : "Free"}</dd></div>
         <div className="flex justify-between font-medium"><dt>{order.status === "paid" ? "Total paid" : "Total"}</dt><dd>{formatPrice(order.totalPaise / 100)}</dd></div>
       </dl>
+
+      {order.status === "paid" && order.reviewable.some((r) => !r.reviewed) && (
+        <section id="review" className="mt-12 border-t border-sand/60 pt-8">
+          <h2 className="font-display text-2xl">Love it? Leave a review</h2>
+          <p className="mt-2 text-sm text-charcoal/65">
+            Once your order has arrived, tell other customers what you think. Reviews appear with your first name and city.
+          </p>
+          <div className="mt-6 space-y-10">
+            {order.reviewable
+              .filter((r) => !r.reviewed)
+              .map((r) => (
+                <ReviewForm key={r.productSlug} token={token} productSlug={r.productSlug} productName={r.name} defaultName={order.firstName} />
+              ))}
+          </div>
+        </section>
+      )}
 
       <p className="mt-10 text-xs text-charcoal/50">
         Questions? <Link href="/contact" className="underline">Contact us</Link>

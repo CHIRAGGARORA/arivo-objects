@@ -245,7 +245,7 @@ export const products: Product[] = [
     slug: "mini-scented-candle-jar-pack-of-4",
     name: "Mini Scented Candle Jar Set — Pack of 4",
     category: "candle",
-    price: 500,
+    price: 499,
     variantLabel: "Fragrance",
     shortDescription:
       "Four mini sandalwood-scented soy wax candles, 50 ml each, in mandala-printed tins with lids — every tin a different design. A petite gift set.",
@@ -320,6 +320,16 @@ export function formatPrice(price: number): string {
 }
 
 /** True unless a product has been explicitly marked not-yet-sellable. */
+/**
+ * The photo to show for a saved cart line. Carts live in the browser for a
+ * long time, so look the image up again instead of trusting the path that
+ * was stored when the item was added (photos get replaced).
+ */
+export function cartLineImage(productSlug: string, variantId: string, savedSrc: string): string {
+  const variant = products.find((p) => p.slug === productSlug)?.variants.find((v) => v.id === variantId);
+  return variant ? getMainImage(variant).src : savedSrc;
+}
+
 export function isSellable(product: Product): boolean {
   return product.sellable !== false;
 }

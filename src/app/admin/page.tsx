@@ -7,7 +7,7 @@ import { config, integrationStatus } from "@/lib/server/config";
 import { query } from "@/lib/server/db";
 import { products } from "@/lib/products";
 import { getPackedSpec, isCompleteSpec } from "@/lib/shipping-specs";
-import { RetryButton, StockForm } from "@/components/admin/AdminControls";
+import { RetryButton, ReviewModeration, StockForm } from "@/components/admin/AdminControls";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -59,7 +59,7 @@ export default async function AdminPage() {
     );
   }
 
-  const [orders, contacts, subs, stock] = await Promise.all([
+  const [orders, contacts, subs, stock, reviews] = await Promise.all([
     query<OrderRow>(
       `SELECT o.id, o.order_number, o.status, o.attention_reason, o.total_paise, o.shipping_address,
               o.razorpay_payment_id, o.failure_reason, o.created_at, o.paid_at, o.coupon_code,
@@ -73,7 +73,12 @@ export default async function AdminPage() {
     ),
     query<{ count: string }>("SELECT count(*) FROM newsletter_subscribers WHERE status = 'subscribed'"),
     query<{ product_slug: string; variant_id: string; quantity: number }>("SELECT * FROM inventory"),
+    query<{ id: string; product_slug: string; rating: number; body: string; author_name: string; city: string | null; status: string; created_at: Date; order_number: string }>(
+      `SELECT r.*, o.order_number FROM reviews r JOIN orders o ON o.id = r.order_id
+        ORDER BY (r.status = 'pending') DESC, r.created_at DESC LIMIT 50`
+    ),
   ]);
+  const pendingReviews = reviews.filter((r) => r.status === "pending");
   const stockMap = new Map(stock.map((s) => [`${s.product_slug}/${s.variant_id}`, s.quantity]));
   const attention = orders.filter(
     (o) => o.attention_reason || o.tasks?.some((t) => t.status === "needs_attention" || t.status === "failed")
@@ -183,6 +188,25 @@ export default async function AdminPage() {
             )}
           </tbody>
         </table>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Reviews ({pendingReviews.length} waiting for approval)</h2>
+        <p className="mt-1 text-charcoal/60">
+          Written by customers from their paid order&rsquo;s page. Only approved reviews appear on the website.
+        </p>
+        <ul className="mt-3 space-y-3">
+          {reviews.map((r) => (
+            <li key={r.id} className={`border p-3 ${r.status === "pending" ? "border-amber-200 bg-amber-50/40" : "border-sand/70"}`}>
+              <strong>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</strong> {r.product_slug} · {r.author_name}
+              {r.city ? `, ${r.city}` : ""} · order {r.order_number} · {when(r.created_at)}{" "}
+              <Badge tone={r.status === "approved" ? "ok" : r.status === "rejected" ? "muted" : "warn"}>{r.status}</Badge>
+              <p className="mt-1 whitespace-pre-wrap text-charcoal/80">{r.body}</p>
+              {r.status === "pending" && <ReviewModeration reviewId={Number(r.id)} />}
+            </li>
+          ))}
+          {reviews.length === 0 && <li className="text-charcoal/60">No reviews yet.</li>}
+        </ul>
       </section>
 
       <section className="mt-10">

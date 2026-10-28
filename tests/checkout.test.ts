@@ -20,6 +20,9 @@ import { POST as webhook } from "@/app/api/webhooks/razorpay/route";
 import { GET as cron } from "@/app/api/cron/process-orders/route";
 import { GET as orderStatus } from "@/app/api/orders/[token]/route";
 import { POST as adminRetry } from "@/app/api/admin/orders/[id]/retry/route";
+import { POST as postReview } from "@/app/api/reviews/route";
+import { POST as moderate } from "@/app/api/admin/reviews/[id]/route";
+import { approvedReviews, reviewSummary } from "@/lib/server/reviews";
 import { resetPool } from "@/lib/server/db";
 
 let fakes: Fakes;
@@ -694,5 +697,54 @@ describe("failure handling", () => {
   it("rejects cron calls without the secret", async () => {
     expect((await cron(new Request("https://example.test"))).status).toBe(401);
     expect((await cron(new Request("https://example.test", { headers: { authorization: "Bearer wrong" } }))).status).toBe(401);
+  });
+});
+
+describe("verified-buyer reviews", () => {
+  const ADMIN = `Basic ${Buffer.from("admin:admin-password-for-tests").toString("base64")}`;
+  const review = (extra: Record<string, unknown>) =>
+    postReview(jsonRequest("/api/reviews", { productSlug: "small-oval-marble-tray", rating: 5, body: "Beautiful tray, even nicer in person.", authorName: "Asha", ...extra }));
+
+  async function paidOrder() {
+    const { body } = await startCheckout();
+    await verifyPayment(body.razorpayOrderId, fakes.pay(body.razorpayOrderId).id);
+    return body.publicToken as string;
+  }
+
+  it("lets the customer of a paid order review once, and shows it only after approval", async () => {
+    const token = await paidOrder();
+    const view = await (await orderStatus(new Request("https://example.test"), { params: Promise.resolve({ token }) })).json();
+    expect(view.reviewable).toEqual([{ productSlug: "small-oval-marble-tray", name: "Small Oval Marble Tray", reviewed: false }]);
+
+    expect((await review({ token })).status).toBe(200);
+    const again = await review({ token });
+    expect((await again.json()).error).toBe("already_reviewed");
+
+    // Pending reviews are never public.
+    expect(await approvedReviews()).toHaveLength(0);
+    const [row] = await sql<{ id: string; city: string }>("SELECT id, city FROM reviews");
+    expect(row.city).toBeTruthy(); // taken from the order, not typed by the reviewer
+
+    const ctx = { params: Promise.resolve({ id: row.id }) };
+    expect((await moderate(jsonRequest(`/api/admin/reviews/${row.id}`, { action: "approve" }), ctx)).status).toBe(401);
+    expect((await moderate(jsonRequest(`/api/admin/reviews/${row.id}`, { action: "approve" }, { authorization: ADMIN }), ctx)).status).toBe(200);
+
+    const pub = await approvedReviews({ productSlug: "small-oval-marble-tray" });
+    expect(pub).toHaveLength(1);
+    expect(pub[0]).toMatchObject({ rating: 5, authorName: "Asha" });
+    expect(await reviewSummary("small-oval-marble-tray")).toEqual({ count: 1, average: 5 });
+  });
+
+  it("refuses reviews for unpaid orders, other products and unknown links", async () => {
+    const { body } = await startCheckout(); // never paid
+    expect((await (await review({ token: body.publicToken })).json()).error).toBe("order_not_paid");
+
+    const token = await paidOrder();
+    const other = await review({ token, productSlug: "large-cloud-marble-tray" });
+    expect((await other.json()).error).toBe("not_in_order");
+
+    expect((await review({ token: "00000000-0000-4000-8000-000000000000" })).status).toBe(404);
+    expect((await review({ token, rating: 0 })).status).toBe(400);
+    expect(await sql("SELECT 1 FROM reviews")).toHaveLength(0);
   });
 });

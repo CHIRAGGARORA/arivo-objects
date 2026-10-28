@@ -7,6 +7,8 @@ import { products, getProductBySlug, getRelatedProducts } from "@/lib/products";
 import { pageMetadata, SITE_URL } from "@/lib/seo";
 import { siteConfig } from "@/lib/siteConfig";
 import { CandleDetails } from "@/types/product";
+import { ProductReviews } from "@/components/reviews/ProductReviews";
+import { approvedReviews, reviewSummary, safely } from "@/lib/server/reviews";
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -40,6 +42,10 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const related = getRelatedProducts(product.slug);
+  const [reviews, summary] = await Promise.all([
+    safely(() => approvedReviews({ productSlug: product.slug, limit: 20 }), []),
+    safely(() => reviewSummary(product.slug), { count: 0, average: 0 }),
+  ]);
   const details = product.details;
   const candle = isCandleDetails(details) ? details : null;
 
@@ -58,6 +64,17 @@ export default async function ProductPage({
       // Add "availability" (e.g. https://schema.org/InStock) once real
       // stock tracking is connected.
     },
+    // Only real, approved verified-buyer reviews — omitted entirely when none exist.
+    ...(summary.count > 0 && {
+      aggregateRating: { "@type": "AggregateRating", ratingValue: summary.average, reviewCount: summary.count },
+      review: reviews.slice(0, 5).map((r) => ({
+        "@type": "Review",
+        reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5 },
+        author: { "@type": "Person", name: r.authorName },
+        reviewBody: r.body,
+        datePublished: r.createdAt.slice(0, 10),
+      })),
+    }),
   };
 
   return (
@@ -145,6 +162,8 @@ export default async function ProductPage({
             </p>
           )}
         </div>
+
+        <ProductReviews reviews={reviews} summary={summary} />
 
         {related.length > 0 && (
           <div className="mt-20 md:mt-28">

@@ -1,0 +1,47 @@
+import { Container } from "@/components/ui/Container";
+import { Stars } from "@/components/reviews/Stars";
+import { approvedReviews, safely } from "@/lib/server/reviews";
+
+/**
+ * Approved verified-buyer reviews scrolling sideways. Renders nothing until
+ * real reviews exist — we never show sample or invented reviews.
+ */
+export async function ReviewsMarquee() {
+  const reviews = await safely(() => approvedReviews({ limit: 20 }), []);
+  if (reviews.length === 0) return null;
+
+  // Repeat short lists so one half of the track is always wider than the screen.
+  const half = Array.from({ length: Math.ceil(6 / reviews.length) }, () => reviews).flat();
+  const average = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+
+  return (
+    <section className="overflow-hidden py-20 md:py-28">
+      <Container className="text-center">
+        <p className="eyebrow">Verified buyers</p>
+        <h2 className="mt-3 text-4xl md:text-5xl">Loved in homes across India</h2>
+        <p className="mt-4 flex items-center justify-center gap-2 text-sm text-charcoal/70">
+          <Stars rating={average} /> {average.toFixed(1)} from {reviews.length} review{reviews.length === 1 ? "" : "s"}
+        </p>
+      </Container>
+      <div className="mt-12">
+        <div className="marquee-track flex w-max" style={{ animationDuration: `${Math.max(40, half.length * 9)}s` }}>
+          {[0, 1].map((copy) => (
+            <ul key={copy} className="flex shrink-0" aria-hidden={copy === 1 ? true : undefined}>
+              {half.map((r, i) => (
+                <li key={`${r.id}-${i}`} className="mx-3 flex w-[300px] shrink-0 flex-col border border-sand/70 bg-bone/40 p-7 md:w-[360px]">
+                  <Stars rating={r.rating} />
+                  <p className="mt-4 flex-1 font-display text-xl italic leading-snug">&ldquo;{r.body}&rdquo;</p>
+                  <p className="mt-6 text-[11px] font-medium uppercase tracking-luxe">
+                    {r.authorName}
+                    {r.city ? `, ${r.city}` : ""}
+                  </p>
+                  <p className="mt-1 text-xs text-charcoal/55">Verified buyer · {r.productName}</p>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

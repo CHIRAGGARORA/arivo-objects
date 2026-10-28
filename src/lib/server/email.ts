@@ -152,8 +152,9 @@ ${itemsTable(d)}
 <p style="margin-top:16px"><strong>Shipping to</strong><br>${escapeHtml(addressText(d.address)).replace(/\n/g, "<br>")}</p>
 <p>Shipping is free, and your order will be dispatched within 48 hours. You can check its status at any time:<br>
 <a href="${escapeHtml(d.statusUrl)}">${escapeHtml(d.statusUrl)}</a></p>
+<p>Once it arrives, we'd love to hear what you think — you can leave a review from the same order page.</p>
 <p style="font-size:12px;color:#777">Payment reference: ${escapeHtml(d.razorpayPaymentId)}</p>`),
-    text: `Thank you, ${d.customerName}.\n\nWe've received your payment for order ${d.orderNumber}.\n\n${itemsText(d)}\n\nShipping to:\n${addressText(d.address)}\n\nShipping is free, and your order will be dispatched within 48 hours.\nOrder status: ${d.statusUrl}\nPayment reference: ${d.razorpayPaymentId}`,
+    text: `Thank you, ${d.customerName}.\n\nWe've received your payment for order ${d.orderNumber}.\n\n${itemsText(d)}\n\nShipping to:\n${addressText(d.address)}\n\nShipping is free, and your order will be dispatched within 48 hours.\nOrder status: ${d.statusUrl}\nOnce it arrives, you can leave a review from the same order page.\nPayment reference: ${d.razorpayPaymentId}`,
   };
 }
 

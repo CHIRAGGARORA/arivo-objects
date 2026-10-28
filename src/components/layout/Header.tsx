@@ -9,6 +9,7 @@ import { siteConfig } from "@/lib/siteConfig";
 
 const navLinks = [
   { href: "/shop", label: "Shop" },
+  { href: "/diwali-gifts", label: "Diwali Gifts" }, // seasonal: remove after Diwali
   { href: "/shop#collection", label: "Collection" },
   { href: "/about", label: "About" },
   { href: "/journal", label: "Journal" },

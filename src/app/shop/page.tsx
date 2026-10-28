@@ -75,9 +75,15 @@ export default async function ShopPage({
         )}
 
         <div id="collection" className="mt-12 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 md:gap-x-8 md:gap-y-14">
-          {visibleProducts.map((product) => (
-            <ProductCard key={product.slug} product={product} />
-          ))}
+          {visibleProducts.flatMap((product) =>
+            // A product sold in several colours gets one card per colour
+            // (filtered to the requested colour, if any).
+            product.variants.length > 1 && (product.variantLabel ?? "Colour") === "Colour"
+              ? product.variants
+                  .filter((v) => !colour || v.id === colour)
+                  .map((v) => <ProductCard key={`${product.slug}/${v.id}`} product={product} variant={v} />)
+              : [<ProductCard key={product.slug} product={product} />]
+          )}
         </div>
       </Container>
     </div>

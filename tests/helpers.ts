@@ -79,8 +79,19 @@ export async function enableTestCatalog(stock = 5) {
   );
 }
 
+/** Product-level `sellable` as committed in products.ts (tests may flip it). */
+const committedProductSellable = new Map(products.map((p) => [p.slug, p.sellable]));
+
+/** Marks a product "coming soon" (not for sale) until the next disableTestCatalog(). */
+export function markComingSoon(slug: string) {
+  products.find((p) => p.slug === slug)!.sellable = false;
+}
+
 export function disableTestCatalog() {
-  for (const p of products) for (const v of p.variants) v.sellable = false;
+  for (const p of products) {
+    p.sellable = committedProductSellable.get(p.slug);
+    for (const v of p.variants) v.sellable = false;
+  }
   for (const k of Object.keys(packedSpecs)) {
     packedSpecs[k] = { weightKg: null, lengthCm: null, breadthCm: null, heightCm: null };
   }

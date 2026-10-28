@@ -247,15 +247,12 @@ export const products: Product[] = [
     category: "candle",
     price: 500,
     variantLabel: "Fragrance",
-    // Coming soon: no photos or dimensions yet. Flip `sellable` to true (and
-    // add real images) when it's ready to take orders.
-    sellable: false,
     shortDescription:
-      "A smaller size of the four-jar candle set. Coming soon.",
+      "Four mini sandalwood-scented soy wax candles, 50 ml each, in mandala-printed tins with lids — every tin a different design. A petite gift set.",
     theObject:
-      "A smaller version of the four-jar scented candle set, planned for launch soon.",
+      "Four mini candle tins with lids, each in its own mandala design — maroon floral, pink petal, green leaf and blue mandala. Every tin is filled with 50 ml of soy wax scented with warm, woody sandalwood. A thoughtful small gift for Diwali, housewarmings, birthdays or return gifts, or keep them for your desk, bedside or bathroom. Once the candle is finished, the printed tin can be reused for jewellery, pins or small trinkets. Props shown in the photos are for styling only; you receive the four candle tins with lids.",
     details: {
-      material: "Patterned jar with lid",
+      material: "Printed metal tin with lid",
       dimensions: null,
       weight: null,
       care: [
@@ -264,7 +261,7 @@ export const products: Product[] = [
         "Keep away from children, pets, drafts and flammable materials.",
         "Burn on a stable, heat-resistant surface.",
       ],
-      waxType: null,
+      waxType: "Soy wax, 50 ml per tin",
       fragrance: "Sandalwood",
       wickType: null,
       burnTimeHours: null,
@@ -278,13 +275,26 @@ export const products: Product[] = [
         label: "Sandalwood",
         colorSwatch: "#C8A27A",
         inStock: null,
-        sellable: false, // [OWNER_APPROVAL_REQUIRED] — product also marked not for sale above
+        sellable: true, // approved by owner for sale (still needs stock in /admin)
         images: [
           {
-            src: "placeholder:mini-candle-jars",
-            alt: "Mini scented candle jar set — photos coming soon",
-            isPlaceholder: true,
+            src: "/products/mini-scented-candle-jar-pack-of-4/sandalwood/styled-row.webp",
+            alt: "Four lit mini sandalwood candles in maroon, pink, green and blue mandala tins on linen, with sandalwood sticks and rose petals",
+            isPlaceholder: false,
             role: "main",
+          },
+          {
+            src: "/products/mini-scented-candle-jar-pack-of-4/sandalwood/styled-festive.webp",
+            alt: "The four mini candle tins lit on a wooden tray with marigolds, jasmine, a brass diya and a gift box",
+            isPlaceholder: false,
+            role: "gallery",
+          },
+          {
+            src: "/products/mini-scented-candle-jar-pack-of-4/sandalwood/styled-flatlay.webp",
+            alt: "Top-down view of the four open mini candle tins with their mandala lids, cream soy wax and sandalwood pieces",
+            isPlaceholder: false,
+            role: "gallery",
+            aspect: "square",
           },
         ],
       },

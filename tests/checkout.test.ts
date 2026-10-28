@@ -6,6 +6,7 @@ import {
   enableTestCatalog,
   Fakes,
   jsonRequest,
+  markComingSoon,
   paymentSignature,
   resetDb,
   setEnv,
@@ -127,6 +128,7 @@ describe("preview-only test products", () => {
   });
 
   it("never lets a preview sell a product the catalogue marks 'coming soon'", async () => {
+    markComingSoon("mini-scented-candle-jar-pack-of-4");
     await sql("INSERT INTO inventory VALUES ('mini-scented-candle-jar-pack-of-4', 'sandalwood', 3)");
     setEnv({ VERCEL_ENV: "preview", PREVIEW_SELLABLE_VARIANTS: "mini-scented-candle-jar-pack-of-4/sandalwood" });
     const { body } = await startCheckout([{ slug: "mini-scented-candle-jar-pack-of-4", variantId: "sandalwood", quantity: 1 }]);
@@ -180,6 +182,7 @@ describe("cart validation and trusted pricing", () => {
     ["duplicate lines", [TRAY(), TRAY()], "duplicate_line"],
     ["more than in stock", [TRAY("black-marble", 6)], "out_of_stock"],
   ])("rejects %s", async (_label, items, code) => {
+    markComingSoon("mini-scented-candle-jar-pack-of-4");
     const { res, body } = await startCheckout(items);
     expect(res.status).toBe(400);
     expect(body.error).toBe(code);
@@ -277,7 +280,7 @@ describe("refunds", () => {
 });
 
 describe("launch catalogue", () => {
-  it("sells exactly the five owner-approved variants and never the Mini set", async () => {
+  it("sells exactly the six owner-approved variants", async () => {
     const { products } = await import("@/lib/products");
     const source = (await import("node:fs")).readFileSync(
       (await import("node:path")).resolve(import.meta.dirname, "../src/lib/products.ts"),
@@ -285,8 +288,9 @@ describe("launch catalogue", () => {
     );
     // Read the committed flags from source (tests toggle the in-memory copy).
     const approved = [...source.matchAll(/sellable: true/g)].length;
-    expect(approved).toBe(5);
-    expect(products.find((p) => p.slug === "mini-scented-candle-jar-pack-of-4")!.sellable).toBe(false);
+    expect(approved).toBe(6);
+    expect(source).not.toMatch(/^    sellable: false/m); // no product is "coming soon" right now
+    expect(products.find((p) => p.slug === "mini-scented-candle-jar-pack-of-4")!.sellable).not.toBe(false);
   });
 });
 

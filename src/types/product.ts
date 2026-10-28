@@ -67,7 +67,7 @@ export interface Product {
   /**
    * Whether this product can currently be purchased. Defaults to true when
    * omitted. Set to false for products that aren't ready to sell yet (e.g.
-   * products that aren't ready, such as the mini candle set) — this is enforced both in the
+   * products that aren't ready yet) — this is enforced both in the
    * UI (Add to Cart / Buy Now disabled) and, independently, server-side in
    * the order-creation API, so it can't be bypassed by tampering with the
    * client.

@@ -299,7 +299,7 @@ export const products: Product[] = [
         ],
       },
     ],
-    featured: false,
+    featured: true,
   },
 ];
 

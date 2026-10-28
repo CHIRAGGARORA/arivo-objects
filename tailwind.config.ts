@@ -14,8 +14,8 @@ const config: Config = {
         ochre: "#C89B4A",
       },
       fontFamily: {
-        display: ["var(--font-fraunces)", "Georgia", "serif"],
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       maxWidth: {
         container: "1440px",
@@ -27,9 +27,11 @@ const config: Config = {
       },
       letterSpacing: {
         wide2: "0.08em",
+        luxe: "0.22em",
       },
       transitionDuration: {
         400: "400ms",
+        1200: "1200ms",
       },
     },
   },

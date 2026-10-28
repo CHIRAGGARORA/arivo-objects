@@ -27,7 +27,8 @@ export function ColorCollection() {
   return (
     <section className="py-20 md:py-28" id="collection">
       <Container>
-        <h2 className="font-display text-2xl md:text-3xl">Trays, in three colours</h2>
+        <p className="eyebrow">Hand-poured marble</p>
+        <h2 className="mt-3 text-4xl md:text-5xl">Trays, in three colours</h2>
         <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
           {colourways.map((c) => (
             <Link key={c.name} href={c.href} className="group block">
@@ -38,7 +39,7 @@ export function ColorCollection() {
                   isPlaceholder: false,
                 }}
                 aspect="portrait"
-                className="transition-opacity duration-400 group-hover:opacity-90"
+                className="transition-transform duration-1200 ease-out group-hover:scale-[1.03]"
               />
               <div className="mt-4 flex items-center gap-2">
                 <span
@@ -46,7 +47,7 @@ export function ColorCollection() {
                   style={{ backgroundColor: c.hex }}
                   aria-hidden="true"
                 />
-                <p className="text-sm">{c.name}</p>
+                <p className="font-display text-lg">{c.name}</p>
               </div>
             </Link>
           ))}

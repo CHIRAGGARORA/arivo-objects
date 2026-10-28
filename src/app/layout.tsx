@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -11,19 +11,19 @@ import { SITE_URL } from "@/lib/seo";
 import { checkoutBlockReason } from "@/lib/server/config";
 import { sellableVariantKeys } from "@/lib/server/catalog";
 
-const fraunces = Fraunces({
+const display = Cormorant_Garamond({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  variable: "--font-display",
   display: "swap",
   weight: ["400", "500", "600"],
   style: ["normal", "italic"],
 });
 
-const inter = Inter({
+const sans = Jost({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-sans",
   display: "swap",
-  weight: ["400", "500", "600"],
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -50,7 +50,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${fraunces.variable} ${inter.variable}`}>
+      <body className={`${display.variable} ${sans.variable}`}>
         <CartProvider checkoutEnabled={checkoutBlockReason() === null} sellableVariants={sellableVariantKeys()}>
           <a
             href="#main-content"

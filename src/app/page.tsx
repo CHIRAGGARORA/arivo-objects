@@ -1,5 +1,6 @@
 import { Hero } from "@/components/home/Hero";
 import { FeaturedObjects } from "@/components/home/FeaturedObjects";
+import { TrustStrip } from "@/components/home/TrustStrip";
 import { ColorCollection } from "@/components/home/ColorCollection";
 import { CandleSection } from "@/components/home/CandleSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
@@ -21,6 +22,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <TrustStrip />
       <FeaturedObjects />
       <CandleSection />
       <ColorCollection />

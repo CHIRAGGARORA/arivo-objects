@@ -10,14 +10,15 @@ export const metadata = pageMetadata({
   path: "/shop",
 });
 
-export default function ShopPage({
+export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: { colour?: string; category?: string };
+  searchParams: Promise<{ colour?: string; category?: string }>;
 }) {
-  const colour = searchParams.colour;
-  const category = searchParams.category === "candle" || searchParams.category === "tray"
-    ? searchParams.category
+  const params = await searchParams;
+  const colour = params.colour;
+  const category = params.category === "candle" || params.category === "tray"
+    ? params.category
     : undefined;
 
   // "Shop by colourway" on the homepage links here with ?colour=<variant id>.
@@ -40,7 +41,8 @@ export default function ShopPage({
   return (
     <div className="py-16 md:py-20">
       <Container>
-        <h1 className="font-display text-3xl md:text-4xl">Shop</h1>
+        <p className="eyebrow">Arivo Objects</p>
+        <h1 className="mt-3 text-5xl md:text-6xl">Shop</h1>
         <p className="mt-3 max-w-md text-sm text-charcoal/70">
           Home decor and gifts. Free shipping on every order, dispatched within 48 hours.
         </p>
@@ -51,7 +53,7 @@ export default function ShopPage({
               key={t.label}
               href={t.href}
               aria-current={t.active ? "page" : undefined}
-              className={`rounded-full border px-4 py-1.5 text-sm transition-colors duration-400 ${
+              className={`rounded-full border px-5 py-2 text-[11px] font-medium uppercase tracking-luxe transition-colors duration-400 ${
                 t.active
                   ? "border-charcoal bg-charcoal text-ivory"
                   : "border-sand text-charcoal/80 hover:border-charcoal"

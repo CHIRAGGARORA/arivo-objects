@@ -21,11 +21,55 @@
   }
 
   h1, h2, h3 {
-    @apply font-display;
+    @apply font-display font-normal;
   }
 }
 
+@layer components {
+  /* Small uppercase label above section headings. */
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-luxe text-charcoal/55;
+  }
+  .btn-primary {
+    @apply inline-block bg-charcoal px-8 py-3.5 text-[11px] font-medium uppercase tracking-luxe text-ivory transition-colors duration-400 hover:bg-graphite;
+  }
+  .btn-outline {
+    @apply inline-block border border-charcoal px-8 py-3.5 text-[11px] font-medium uppercase tracking-luxe transition-colors duration-400 hover:bg-charcoal hover:text-ivory;
+  }
+}
+
+/* Announcement ticker: two identical halves scroll by exactly one half. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 45s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Scroll reveal. Only applied by <Reveal> after hydration, so content is
+   never hidden when JavaScript is off or the element is already in view. */
+.reveal-pending {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.reveal-shown {
+  opacity: 1;
+  transform: none;
+  transition: opacity 900ms ease, transform 900ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+  .reveal-pending {
+    opacity: 1;
+    transform: none;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

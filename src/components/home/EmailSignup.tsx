@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { Container } from "@/components/ui/Container";
+import { ProductPicture } from "@/components/ui/ProductPicture";
 import { siteConfig } from "@/lib/siteConfig";
 
 /**
@@ -41,19 +42,31 @@ export function EmailSignup() {
   }
 
   return (
-    <section className="border-t border-sand/60 py-20 md:py-28">
-      <Container className="max-w-xl text-center">
-        <h2 className="font-display text-2xl md:text-3xl">Enter the world of Arivo.</h2>
-        <p className="mt-3 text-sm text-charcoal/70">
-          New drops and restocks.
+    <section className="relative overflow-hidden bg-charcoal text-ivory">
+      <div className="absolute inset-0 opacity-45">
+        <ProductPicture
+          image={{ src: "/products/scented-candle-jar-pack-of-4/sandalwood/styled-row.webp", alt: "", isPlaceholder: false }}
+          aspect="wide"
+          className="h-full w-full !aspect-auto"
+          sizes="100vw"
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-charcoal/60 via-charcoal/40 to-charcoal/80" />
+      <Container className="relative max-w-2xl py-24 text-center md:py-36">
+        <p className="text-[11px] font-medium uppercase tracking-luxe text-ochre">The Arivo letter</p>
+        <h2 className="mt-5 text-4xl leading-tight md:text-6xl">
+          Enter the world <em className="italic">of Arivo</em>
+        </h2>
+        <p className="mx-auto mt-5 max-w-md text-base font-light text-ivory/75">
+          First look at new scents and drops, restock alerts and the occasional note on slow living.
         </p>
         {status !== "submitted" ? (
-          <form onSubmit={handleSubmit} noValidate className="mt-8">
+          <form onSubmit={handleSubmit} noValidate className="mx-auto mt-10 max-w-lg">
             <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
               <label htmlFor="signup-website">Website</label>
               <input id="signup-website" name="website" tabIndex={-1} autoComplete="off" />
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
               <label htmlFor="email" className="sr-only">
                 Email address
               </label>
@@ -63,25 +76,25 @@ export function EmailSignup() {
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="Email address"
-                className="flex-1 border border-sand bg-transparent px-4 py-3 text-sm placeholder:text-charcoal/40 focus:border-charcoal"
+                placeholder="Your email address"
+                className="flex-1 border-0 border-b border-ivory/50 bg-transparent px-1 py-3 text-base text-ivory placeholder:text-ivory/50 focus:border-ivory focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={status === "busy"}
-                className="border border-charcoal px-6 py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory disabled:opacity-50"
+                className="bg-ivory px-8 py-3.5 text-[11px] font-medium uppercase tracking-luxe text-charcoal transition-opacity duration-400 hover:opacity-90 disabled:opacity-50"
               >
-                {status === "busy" ? "Signing up…" : "Sign up"}
+                {status === "busy" ? "Signing up…" : "Subscribe"}
               </button>
             </div>
-            <label className="mt-3 flex items-start justify-center gap-2 text-left text-xs text-charcoal/65">
+            <label className="mt-5 flex items-start justify-center gap-2 text-left text-xs text-ivory/65">
               <input type="checkbox" name="consent" required className="mt-0.5" />
               <span>I&rsquo;d like to receive occasional emails from {siteConfig.brandName}. Unsubscribe any time.</span>
             </label>
-            {error && <p role="alert" className="mt-3 text-sm text-terracotta">{error}</p>}
+            {error && <p role="alert" className="mt-4 text-sm text-ochre">{error}</p>}
           </form>
         ) : (
-          <p className="mt-8 text-sm" role="status">Thank you — you&rsquo;re on the list.</p>
+          <p className="mt-10 font-display text-2xl italic" role="status">Thank you — you&rsquo;re on the list.</p>
         )}
       </Container>
     </section>

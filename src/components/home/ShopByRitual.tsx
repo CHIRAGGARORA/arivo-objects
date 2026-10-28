@@ -49,9 +49,9 @@ export function ShopByRitual() {
                 </div>
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/75 via-charcoal/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-7 text-ivory md:p-8">
-                  <p className="text-[10px] font-medium uppercase tracking-luxe text-ivory/75">{r.eyebrow}</p>
+                  <p className="text-xs font-medium uppercase tracking-luxe text-ivory/75">{r.eyebrow}</p>
                   <h3 className="mt-2 text-3xl md:text-4xl">{r.title}</h3>
-                  <p className="mt-4 inline-block border-b border-ivory/60 pb-1 text-[11px] font-medium uppercase tracking-luxe transition-colors duration-400 group-hover:border-ivory">
+                  <p className="mt-4 inline-block border-b border-ivory/60 pb-1 text-xs font-medium uppercase tracking-luxe transition-colors duration-400 group-hover:border-ivory">
                     {r.cta}
                   </p>
                 </div>

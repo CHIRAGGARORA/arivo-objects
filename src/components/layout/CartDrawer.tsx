@@ -98,7 +98,7 @@ export function CartDrawer() {
                       <p className="text-sm">{formatPrice(line.price * line.quantity)}</p>
                     </div>
                     <button
-                      className="mt-1 self-start text-xs text-charcoal/50 underline hover:text-charcoal"
+                      className="mt-1 self-start text-xs text-charcoal/60 underline hover:text-charcoal"
                       onClick={() => removeItem(line.productSlug, line.variantId)}
                     >
                       Remove

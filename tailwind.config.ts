@@ -27,7 +27,7 @@ const config: Config = {
       },
       letterSpacing: {
         wide2: "0.08em",
-        luxe: "0.22em",
+        luxe: "0.16em",
       },
       transitionDuration: {
         400: "400ms",

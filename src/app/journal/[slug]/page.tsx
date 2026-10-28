@@ -30,18 +30,18 @@ export default async function JournalArticlePage({ params }: { params: Promise<{
   return (
     <article className="py-16 md:py-24">
       <Container className="max-w-3xl">
-        <Link href="/journal" className="text-[11px] font-medium uppercase tracking-luxe text-charcoal/60 hover:text-charcoal">
+        <Link href="/journal" className="text-xs font-medium uppercase tracking-luxe text-charcoal/60 hover:text-charcoal">
           &larr; Journal
         </Link>
         <p className="eyebrow mt-10">{article.category} · {article.readingTime}</p>
         <h1 className="mt-4 text-5xl leading-[1.05] md:text-6xl">{article.title}</h1>
-        <p className="mt-5 text-lg font-light text-charcoal/70">{article.excerpt}</p>
+        <p className="mt-5 text-lg text-charcoal/70">{article.excerpt}</p>
       </Container>
       <Container className="mt-12 max-w-5xl">
         <ProductPicture image={{ ...article.cover, isPlaceholder: false }} aspect="landscape" sizes="(min-width: 1024px) 1024px, 100vw" priority />
       </Container>
       <Container className="max-w-2xl">
-        <div className="mt-12 space-y-6 text-[17px] font-light leading-relaxed text-charcoal/85 first-letter:float-left first-letter:mr-2 first-letter:font-display first-letter:text-6xl first-letter:leading-[0.85]">
+        <div className="mt-12 space-y-6 text-[17px] leading-relaxed text-charcoal/85 first-letter:float-left first-letter:mr-2 first-letter:font-display first-letter:text-6xl first-letter:leading-[0.85]">
           {article.body.map((paragraph, i) => (
             <p key={i}>{paragraph}</p>
           ))}

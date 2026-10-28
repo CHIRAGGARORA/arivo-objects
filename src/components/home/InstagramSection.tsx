@@ -28,7 +28,7 @@ export function InstagramSection() {
           <h2 className="mt-4 text-4xl md:text-6xl">
             Follow the <em className="italic">ritual</em>
           </h2>
-          <p className="mt-4 max-w-md text-base font-light text-charcoal/70">New drops, styling ideas and behind the scenes.</p>
+          <p className="mt-4 max-w-md text-base text-charcoal/70">New drops, styling ideas and behind the scenes.</p>
         </div>
         <div className="mt-12 grid grid-cols-3 gap-2 md:grid-cols-6 md:gap-3">
           {tiles.map((t) => (

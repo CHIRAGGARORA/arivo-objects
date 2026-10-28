@@ -65,7 +65,7 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
                 <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <span className="absolute bottom-4 right-4 z-10 bg-ivory/85 px-3 py-1 text-[11px] tracking-wide2 text-charcoal backdrop-blur" aria-live="polite">
+            <span className="absolute bottom-4 right-4 z-10 bg-ivory/85 px-3 py-1 text-xs tracking-wide2 text-charcoal backdrop-blur" aria-live="polite">
               {currentIndex + 1} / {images.length}
             </span>
           </>

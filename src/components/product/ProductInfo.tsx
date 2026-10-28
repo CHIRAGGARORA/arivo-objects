@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product } from "@/types/product";
-import { formatPrice } from "@/lib/products";
+import { PriceTag } from "@/components/shop/PriceTag";
 import { MAX_QTY_PER_LINE, useCart } from "@/lib/cart-context";
 
 interface ProductInfoProps {
@@ -34,15 +34,18 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
 
   return (
     <div>
-      <h1 className="font-display text-3xl md:text-4xl">{product.name}</h1>
-      <p className="mt-2 text-lg">{formatPrice(product.price)}</p>
-      <p className="mt-4 max-w-md text-sm leading-relaxed text-charcoal/75">
+      <h1 className="font-display text-4xl font-semibold leading-tight md:text-5xl">{product.name}</h1>
+      <div className="mt-4">
+        <PriceTag product={product} size="lg" />
+        {product.mrp && <p className="mt-1.5 text-sm text-charcoal/60">MRP inclusive of all taxes</p>}
+      </div>
+      <p className="mt-6 max-w-md text-base leading-relaxed text-charcoal/80">
         {product.shortDescription}
       </p>
 
       {product.variants.length > 1 && (
         <fieldset className="mt-8">
-          <legend className="text-sm">
+          <legend className="text-base">
             {product.variantLabel ?? "Colour"} — {variant.label}
           </legend>
           <div className="mt-3 flex gap-3">
@@ -53,7 +56,7 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
                 onClick={() => onVariantChange(v.id)}
                 aria-pressed={v.id === variantId}
                 aria-label={v.label}
-                className={`h-8 w-8 rounded-full border-2 transition-colors duration-400 ${
+                className={`h-10 w-10 rounded-full border-2 transition-colors duration-400 ${
                   v.id === variantId ? "border-charcoal" : "border-transparent hover:border-charcoal/30"
                 }`}
               >
@@ -71,18 +74,18 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         <div className="flex items-center border border-sand">
           <button
             type="button"
-            className="px-3 py-2 text-sm"
+            className="px-4 py-3 text-base"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             aria-label="Decrease quantity"
           >
             –
           </button>
-          <span className="px-3 text-sm" aria-live="polite">
+          <span className="px-3 text-base font-medium" aria-live="polite">
             {quantity}
           </span>
           <button
             type="button"
-            className="px-3 py-2 text-sm"
+            className="px-4 py-3 text-base"
             onClick={() => setQuantity((q) => Math.min(MAX_QTY_PER_LINE, q + 1))}
             aria-label="Increase quantity"
           >
@@ -90,7 +93,7 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
           </button>
         </div>
 
-        <p className="text-xs text-charcoal/50">
+        <p className="text-sm text-charcoal/60">
           {comingSoon
             ? "Coming soon"
             : variant.inStock === false
@@ -106,7 +109,7 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
           type="button"
           onClick={() => addItem(product, variantId, quantity)}
           disabled={!orderable}
-          className="flex-1 bg-charcoal py-3 text-sm tracking-wide text-ivory transition-opacity duration-400 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40"
+          className="flex-1 bg-charcoal py-4 text-sm font-medium uppercase tracking-luxe text-ivory transition-opacity duration-400 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40"
         >
           {comingSoon ? "Coming soon" : "Add to cart"}
         </button>
@@ -114,20 +117,20 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
           type="button"
           onClick={handleBuyNow}
           disabled={!orderable}
-          className="flex-1 border border-charcoal py-3 text-sm tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-charcoal"
+          className="flex-1 border border-charcoal py-4 text-sm font-medium uppercase tracking-luxe transition-colors duration-400 hover:bg-charcoal hover:text-ivory disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-charcoal"
         >
           Buy now
         </button>
       </div>
 
-      <ul className="mt-6 space-y-1.5 border-t border-sand/60 pt-5 text-xs text-charcoal/70">
+      <ul className="mt-6 space-y-2 border-t border-sand/60 pt-5 text-sm text-charcoal/75">
         <li>Free shipping on every order</li>
         <li>Dispatched within 48 hours</li>
         <li>No returns</li>
       </ul>
 
       {product.category === "tray" && (
-        <p className="mt-4 text-xs text-charcoal/50">
+        <p className="mt-4 text-sm text-charcoal/60">
           Each piece is individually cast. Marble patterns vary naturally — no two
           pieces are exactly identical.
         </p>

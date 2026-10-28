@@ -75,7 +75,7 @@ export function CartPageContent() {
                         </button>
                       </div>
                       <button
-                        className="text-xs text-charcoal/50 underline hover:text-charcoal"
+                        className="text-xs text-charcoal/60 underline hover:text-charcoal"
                         onClick={() => removeItem(line.productSlug, line.variantId)}
                       >
                         Remove

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Product, ProductVariant } from "@/types/product";
-import { formatPrice, getGalleryImages, getMainImage, isSellable } from "@/lib/products";
+import { discountPercent, getGalleryImages, getMainImage, isSellable } from "@/lib/products";
+import { PriceTag } from "@/components/shop/PriceTag";
 import { ImageCycler } from "@/components/shop/ImageCycler";
 
 /**
@@ -20,17 +21,22 @@ export function ProductCard({ product, variant }: { product: Product; variant?: 
         <div className="transition-transform duration-1200 ease-out group-hover:scale-[1.04]">
           <ImageCycler images={images} sizes="(min-width: 768px) 33vw, 50vw" />
         </div>
-        {product.category === "candle" && sellable && (
-          <span className="absolute left-3 top-3 bg-ivory/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-luxe">
-            New
-          </span>
-        )}
+        <div className="absolute left-3 top-3 z-10 flex gap-1.5">
+          {sellable && discountPercent(product) !== null && (
+            <span className="bg-terracotta px-2.5 py-1 text-xs font-semibold uppercase tracking-wide2 text-ivory">
+              {discountPercent(product)}% off
+            </span>
+          )}
+          {product.category === "candle" && sellable && (
+            <span className="bg-ivory/90 px-2.5 py-1 text-xs font-medium uppercase tracking-luxe">New</span>
+          )}
+        </div>
       </div>
-      <div className="mt-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+      <div className="mt-4">
         <div>
-          <p className="font-display text-lg leading-snug md:text-xl">{product.name}</p>
+          <p className="font-display text-xl font-semibold leading-snug md:text-2xl">{product.name}</p>
           {variant && (
-            <p className="mt-0.5 flex items-center gap-1.5 text-xs text-charcoal/60">
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-charcoal/70">
               {variant.colorSwatch && (
                 <span
                   className="inline-block h-2.5 w-2.5 rounded-full border border-charcoal/20"
@@ -42,7 +48,7 @@ export function ProductCard({ product, variant }: { product: Product; variant?: 
             </p>
           )}
         </div>
-        <p className="shrink-0 text-sm text-charcoal/70">{sellable ? formatPrice(product.price) : "Coming soon"}</p>
+        <p className="mt-2">{sellable ? <PriceTag product={product} badge={false} /> : <span className="text-sm text-charcoal/70">Coming soon</span>}</p>
       </div>
     </Link>
   );

@@ -39,11 +39,11 @@ export function CandleSection() {
     <section className="relative overflow-hidden bg-charcoal py-20 text-ivory md:py-32">
       <Container className="grid grid-cols-1 items-center gap-12 md:grid-cols-12 md:gap-16">
         <Reveal className="md:col-span-5">
-          <p className="text-[11px] font-medium uppercase tracking-luxe text-ochre">New · Sandalwood</p>
+          <p className="text-xs font-medium uppercase tracking-luxe text-ochre">New · Sandalwood</p>
           <h2 className="mt-5 text-5xl leading-[1.02] md:text-7xl">
             Four jars. <em className="italic">One</em> warm scent.
           </h2>
-          <p className="mt-7 max-w-sm text-base font-light leading-relaxed text-ivory/75">
+          <p className="mt-7 max-w-sm text-base leading-relaxed text-ivory/75">
             Soy wax and cotton wicks, scented with woody sandalwood and poured into patterned tins you&rsquo;ll keep
             long after the last burn.
           </p>
@@ -55,7 +55,7 @@ export function CandleSection() {
                 type="button"
                 aria-pressed={selected === i}
                 onClick={() => setSelected(i)}
-                className={`px-5 py-3 text-[11px] font-medium uppercase tracking-luxe transition-colors duration-400 md:px-7 ${
+                className={`px-5 py-3 text-xs font-medium uppercase tracking-luxe transition-colors duration-400 md:px-7 ${
                   selected === i ? "bg-ivory text-charcoal" : "text-ivory/75 hover:text-ivory"
                 }`}
               >
@@ -64,12 +64,12 @@ export function CandleSection() {
             ))}
           </div>
 
-          <p key={current.slug} className="mt-6 max-w-sm text-sm font-light leading-relaxed text-ivory/70" aria-live="polite">
+          <p key={current.slug} className="mt-6 max-w-sm text-sm leading-relaxed text-ivory/70" aria-live="polite">
             {current.blurb}
           </p>
           <Link
             href={`/products/${current.product.slug}`}
-            className="mt-6 inline-block text-[11px] font-medium uppercase tracking-luxe text-ivory underline-offset-8 hover:underline"
+            className="mt-6 inline-block text-xs font-medium uppercase tracking-luxe text-ivory underline-offset-8 hover:underline"
           >
             Discover the {current.label} &rarr;
           </Link>
@@ -88,7 +88,7 @@ export function CandleSection() {
                 </div>
               </div>
             ))}
-            <span className="absolute bottom-5 left-5 z-10 bg-ivory/90 px-4 py-2 text-[10px] font-medium uppercase tracking-luxe text-charcoal">
+            <span className="absolute bottom-5 left-5 z-10 bg-ivory/90 px-4 py-2 text-xs font-medium uppercase tracking-luxe text-charcoal">
               {current.product.name}
             </span>
           </Link>

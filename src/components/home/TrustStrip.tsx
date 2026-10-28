@@ -17,7 +17,7 @@ export function TrustStrip() {
               <path d={it.icon} stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" strokeLinecap="round" />
             </svg>
             <p className="mt-3 font-display text-lg leading-tight">{it.title}</p>
-            <p className="mt-1 text-xs font-light text-charcoal/60">{it.text}</p>
+            <p className="mt-1 text-xs text-charcoal/60">{it.text}</p>
           </div>
         ))}
       </Container>

@@ -54,6 +54,12 @@ export interface Product {
   name: string;
   category: ProductCategory;
   price: number;
+  /**
+   * Maximum retail price in rupees, as printed on the product label. Shown
+   * struck through next to `price`. Must match the declared MRP on the
+   * packaging (Legal Metrology); omit if there is none.
+   */
+  mrp?: number;
   shortDescription: string;
   theObject: string;
   /** Optional — a product page only shows these sections once they're written. */

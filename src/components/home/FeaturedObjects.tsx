@@ -15,7 +15,7 @@ export function FeaturedObjects() {
             <p className="eyebrow">The collection</p>
             <h2 className="mt-3 text-4xl md:text-5xl">Objects for slow living</h2>
           </div>
-          <Link href="/shop" className="hidden text-[11px] uppercase tracking-luxe underline-offset-4 hover:underline sm:block">
+          <Link href="/shop" className="hidden text-xs uppercase tracking-luxe underline-offset-4 hover:underline sm:block">
             View all
           </Link>
         </Reveal>

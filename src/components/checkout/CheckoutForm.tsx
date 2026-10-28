@@ -301,7 +301,7 @@ export function CheckoutForm({
             <div className="flex justify-between">
               <dt>
                 Discount ({coupon.code}){" "}
-                <button type="button" onClick={removeCoupon} className="ml-1 text-xs text-charcoal/50 underline">
+                <button type="button" onClick={removeCoupon} className="ml-1 text-xs text-charcoal/60 underline">
                   Remove
                 </button>
               </dt>
@@ -374,7 +374,7 @@ export function CheckoutForm({
             {couponState.error && <p className="mt-1.5 text-xs text-terracotta">{couponState.error}</p>}
           </div>
         )}
-        <p className="mt-4 text-xs text-charcoal/50">The final amount is confirmed by our server before payment.</p>
+        <p className="mt-4 text-xs text-charcoal/60">The final amount is confirmed by our server before payment.</p>
       </aside>
     </div>
   );

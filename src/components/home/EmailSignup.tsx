@@ -53,11 +53,11 @@ export function EmailSignup() {
       </div>
       <div className="absolute inset-0 bg-gradient-to-b from-charcoal/60 via-charcoal/40 to-charcoal/80" />
       <Container className="relative max-w-2xl py-24 text-center md:py-36">
-        <p className="text-[11px] font-medium uppercase tracking-luxe text-ochre">The Arivo letter</p>
+        <p className="text-xs font-medium uppercase tracking-luxe text-ochre">The Arivo letter</p>
         <h2 className="mt-5 text-4xl leading-tight md:text-6xl">
           Enter the world <em className="italic">of Arivo</em>
         </h2>
-        <p className="mx-auto mt-5 max-w-md text-base font-light text-ivory/75">
+        <p className="mx-auto mt-5 max-w-md text-base text-ivory/75">
           First look at new scents and drops, restock alerts and the occasional note on slow living.
         </p>
         {status !== "submitted" ? (
@@ -77,12 +77,12 @@ export function EmailSignup() {
                 required
                 autoComplete="email"
                 placeholder="Your email address"
-                className="flex-1 border-0 border-b border-ivory/50 bg-transparent px-1 py-3 text-base text-ivory placeholder:text-ivory/50 focus:border-ivory focus:outline-none"
+                className="flex-1 border-0 border-b border-ivory/50 bg-transparent px-1 py-3 text-base text-ivory placeholder:text-ivory/70 focus:border-ivory focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={status === "busy"}
-                className="bg-ivory px-8 py-3.5 text-[11px] font-medium uppercase tracking-luxe text-charcoal transition-opacity duration-400 hover:opacity-90 disabled:opacity-50"
+                className="bg-ivory px-8 py-3.5 text-xs font-medium uppercase tracking-luxe text-charcoal transition-opacity duration-400 hover:opacity-90 disabled:opacity-50"
               >
                 {status === "busy" ? "Signing up…" : "Subscribe"}
               </button>

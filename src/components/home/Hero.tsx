@@ -11,7 +11,7 @@ export function Hero() {
           <h1 className="mt-5 text-[2.9rem] leading-[1.02] md:text-7xl">
             Decor you&rsquo;ll <em className="italic text-terracotta">want</em> to gift.
           </h1>
-          <p className="mt-6 max-w-md text-base font-light leading-relaxed text-charcoal/75 md:text-lg">
+          <p className="mt-6 max-w-md text-base leading-relaxed text-charcoal/75 md:text-lg">
             Hand-poured marble trays and sandalwood soy wax candles, made to be
             kept, lit and passed on to the people you love.
           </p>

@@ -18,7 +18,7 @@ export function ProductReviews({ reviews, summary }: { reviews: PublicReview[]; 
         )}
       </div>
       {reviews.length === 0 ? (
-        <p className="mt-8 text-sm font-light leading-relaxed text-charcoal/70">
+        <p className="mt-8 text-sm leading-relaxed text-charcoal/70">
           No reviews yet. Bought this? You can leave a review from your order page — the link is in your order
           confirmation email.
         </p>

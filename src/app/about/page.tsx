@@ -34,7 +34,7 @@ export default function AboutPage() {
         <h1 className="mt-3 text-5xl leading-[1.05] md:text-7xl">
           Objects for <em className="italic text-terracotta">slow</em> living
         </h1>
-        <p className="mt-7 max-w-xl text-lg font-light leading-relaxed text-charcoal/80">
+        <p className="mt-7 max-w-xl text-lg leading-relaxed text-charcoal/80">
           Arivo Objects is an independent, design-led home decor and gifting brand.
           We make small objects for everyday rituals: a tray by the door for your
           keys, a candle lit at the end of the day. Things that look good, feel
@@ -71,7 +71,7 @@ export default function AboutPage() {
           <Reveal key={v.title} delayMs={i * 120}>
             <p className="font-display text-sm italic text-terracotta">0{i + 1}</p>
             <h2 className="mt-2 text-3xl">{v.title}</h2>
-            <p className="mt-3 text-base font-light leading-relaxed text-charcoal/75">{v.text}</p>
+            <p className="mt-3 text-base leading-relaxed text-charcoal/75">{v.text}</p>
           </Reveal>
         ))}
       </Container>

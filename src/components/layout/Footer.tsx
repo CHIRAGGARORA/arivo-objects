@@ -59,7 +59,7 @@ export function Footer() {
         </div>
       </Container>
 
-      <Container className="flex flex-col gap-2 border-t border-sand/60 py-6 text-xs text-charcoal/50 md:flex-row md:items-center md:justify-between">
+      <Container className="flex flex-col gap-2 border-t border-sand/60 py-6 text-xs text-charcoal/60 md:flex-row md:items-center md:justify-between">
         <p>&copy; {new Date().getFullYear()} Arivo Objects. All rights reserved.</p>
         <p>Designed in India.</p>
       </Container>

@@ -26,6 +26,7 @@ export const products: Product[] = [
     name: "Small Oval Marble Tray",
     category: "tray",
     price: 899,
+    mrp: 1798, // owner-declared MRP; must match the product label
     shortDescription:
       "A small oval tray cast in Jesmonite, with a rope-inspired edge and a marble finish that varies piece to piece.",
     theObject:
@@ -117,6 +118,7 @@ export const products: Product[] = [
     name: "Large Cloud Marble Tray",
     category: "tray",
     price: 1599,
+    mrp: 3198, // owner-declared MRP; must match the product label
     shortDescription:
       "An abstract, cloud-shaped tray in Jesmonite — a larger sculptural surface for a console, coffee table or vanity.",
     theObject:
@@ -184,6 +186,7 @@ export const products: Product[] = [
     name: "Scented Candle Jar Set — Pack of 4",
     category: "candle",
     price: 899,
+    mrp: 1798, // owner-declared MRP; must match the product label
     variantLabel: "Fragrance",
     shortDescription:
       "Four sandalwood-scented soy wax candles, 130 ml each, in patterned jars with lids — every jar a different colour. A ready-made gift set.",
@@ -246,6 +249,7 @@ export const products: Product[] = [
     name: "Mini Scented Candle Jar Set — Pack of 4",
     category: "candle",
     price: 499,
+    mrp: 998, // owner-declared MRP; must match the product label
     variantLabel: "Fragrance",
     shortDescription:
       "Four mini sandalwood-scented soy wax candles, 50 ml each, in mandala-printed tins with lids — every tin a different design. A petite gift set.",
@@ -320,6 +324,12 @@ export function formatPrice(price: number): string {
 }
 
 /** True unless a product has been explicitly marked not-yet-sellable. */
+/** Whole-number % off MRP, or null when there's no MRP above the price. */
+export function discountPercent(product: Product): number | null {
+  if (!product.mrp || product.mrp <= product.price) return null;
+  return Math.round(((product.mrp - product.price) / product.mrp) * 100);
+}
+
 /**
  * The photo to show for a saved cart line. Carts live in the browser for a
  * long time, so look the image up again instead of trusting the path that

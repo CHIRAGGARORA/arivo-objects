@@ -154,7 +154,7 @@ export default async function ProductPage({
             ]}
           />
           {product.category === "tray" && (
-            <p className="mt-6 text-xs text-charcoal/50">
+            <p className="mt-6 text-xs text-charcoal/60">
               Handmade disclaimer: each piece is individually cast by hand. Marble
               patterns naturally vary, and small surface characteristics such as
               minor air pockets may occur. This is part of the handmade process,

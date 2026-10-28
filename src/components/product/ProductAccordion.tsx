@@ -23,7 +23,7 @@ export function ProductAccordion({ sections }: { sections: AccordionSection[] })
               onClick={() => setOpenIndex(open ? null : i)}
             >
               <span className="text-sm">{section.title}</span>
-              <span aria-hidden="true" className="text-charcoal/50">
+              <span aria-hidden="true" className="text-charcoal/60">
                 {open ? "–" : "+"}
               </span>
             </button>

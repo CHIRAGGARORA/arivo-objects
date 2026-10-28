@@ -17,7 +17,7 @@ export function AnnouncementBar() {
         {[0, 1].map((copy) => (
           <ul key={copy} className="flex shrink-0 items-center">
             {half.map((m, i) => (
-              <li key={i} className="flex items-center whitespace-nowrap text-[11px] uppercase tracking-luxe">
+              <li key={i} className="flex items-center whitespace-nowrap text-xs uppercase tracking-luxe">
                 <span className="px-8">{m}</span>
                 <span className="text-ochre">✦</span>
               </li>

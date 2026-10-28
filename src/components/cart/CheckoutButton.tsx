@@ -35,7 +35,7 @@ export function CheckoutButton({ onNavigate, className = "" }: { onNavigate?: ()
       >
         {checkoutEnabled ? "Checkout unavailable" : "Online checkout coming soon"}
       </button>
-      <p className="mt-3 text-center text-xs text-charcoal/50">{reason}</p>
+      <p className="mt-3 text-center text-xs text-charcoal/60">{reason}</p>
     </div>
   );
 }

@@ -5,6 +5,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* 17px base: everything sized in rem scales up together for readability. */
+    font-size: 106.25%;
   }
 
   body {
@@ -28,13 +30,13 @@
 @layer components {
   /* Small uppercase label above section headings. */
   .eyebrow {
-    @apply text-[11px] font-medium uppercase tracking-luxe text-charcoal/55;
+    @apply text-xs font-medium uppercase tracking-luxe text-charcoal/70;
   }
   .btn-primary {
-    @apply inline-block bg-charcoal px-8 py-3.5 text-[11px] font-medium uppercase tracking-luxe text-ivory transition-colors duration-400 hover:bg-graphite;
+    @apply inline-block bg-charcoal px-8 py-4 text-xs font-medium uppercase tracking-luxe text-ivory transition-colors duration-400 hover:bg-graphite;
   }
   .btn-outline {
-    @apply inline-block border border-charcoal px-8 py-3.5 text-[11px] font-medium uppercase tracking-luxe transition-colors duration-400 hover:bg-charcoal hover:text-ivory;
+    @apply inline-block border border-charcoal px-8 py-4 text-xs font-medium uppercase tracking-luxe transition-colors duration-400 hover:bg-charcoal hover:text-ivory;
   }
 }
 

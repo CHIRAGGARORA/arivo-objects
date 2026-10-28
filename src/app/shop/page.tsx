@@ -53,7 +53,7 @@ export default async function ShopPage({
               key={t.label}
               href={t.href}
               aria-current={t.active ? "page" : undefined}
-              className={`rounded-full border px-5 py-2 text-[11px] font-medium uppercase tracking-luxe transition-colors duration-400 ${
+              className={`rounded-full border px-5 py-2 text-xs font-medium uppercase tracking-luxe transition-colors duration-400 ${
                 t.active
                   ? "border-charcoal bg-charcoal text-ivory"
                   : "border-sand text-charcoal/80 hover:border-charcoal"

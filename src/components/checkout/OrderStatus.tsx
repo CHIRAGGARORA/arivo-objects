@@ -76,7 +76,7 @@ export function OrderStatus({ token }: { token: string }) {
 
   return (
     <div>
-      <p className="text-xs uppercase tracking-widest text-charcoal/50">Order {order.orderNumber}</p>
+      <p className="text-xs uppercase tracking-widest text-charcoal/60">Order {order.orderNumber}</p>
       <h1 className="mt-3 font-display text-3xl md:text-4xl" aria-live="polite">
         {heading}
       </h1>
@@ -160,7 +160,7 @@ export function OrderStatus({ token }: { token: string }) {
         </section>
       )}
 
-      <p className="mt-10 text-xs text-charcoal/50">
+      <p className="mt-10 text-xs text-charcoal/60">
         Questions? <Link href="/contact" className="underline">Contact us</Link>
         {siteConfig.instagramHandle ? <> or message @{siteConfig.instagramHandle} on Instagram</> : null} with your order
         number.

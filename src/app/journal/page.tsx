@@ -19,7 +19,7 @@ export default function JournalIndexPage() {
       <Container>
         <p className="eyebrow">The Arivo journal</p>
         <h1 className="mt-3 text-5xl md:text-7xl">Notes &amp; rituals</h1>
-        <p className="mt-5 max-w-lg text-base font-light text-charcoal/70">
+        <p className="mt-5 max-w-lg text-base text-charcoal/70">
           Candle care, the material behind our trays, gifting ideas and how every object is made.
         </p>
 
@@ -32,8 +32,8 @@ export default function JournalIndexPage() {
           <div>
             <p className="eyebrow">{lead.category} · {lead.readingTime}</p>
             <h2 className="mt-4 text-4xl leading-tight md:text-5xl">{lead.title}</h2>
-            <p className="mt-4 max-w-md text-base font-light text-charcoal/70">{lead.excerpt}</p>
-            <p className="mt-6 text-[11px] font-medium uppercase tracking-luxe underline-offset-4 group-hover:underline">Read the article</p>
+            <p className="mt-4 max-w-md text-base text-charcoal/70">{lead.excerpt}</p>
+            <p className="mt-6 text-xs font-medium uppercase tracking-luxe underline-offset-4 group-hover:underline">Read the article</p>
           </div>
         </Link>
 
@@ -48,7 +48,7 @@ export default function JournalIndexPage() {
                 </div>
                 <p className="eyebrow mt-5">{article.category} · {article.readingTime}</p>
                 <h3 className="mt-2 text-2xl leading-snug">{article.title}</h3>
-                <p className="mt-2 text-sm font-light text-charcoal/70">{article.excerpt}</p>
+                <p className="mt-2 text-sm text-charcoal/70">{article.excerpt}</p>
               </Link>
             </Reveal>
           ))}
@@ -56,7 +56,7 @@ export default function JournalIndexPage() {
 
         <div className="mt-24 border-t border-sand/70 pt-12 text-center">
           <h2 className="text-3xl md:text-4xl">Have a question?</h2>
-          <p className="mt-3 text-base font-light text-charcoal/70">Shipping, payments, candle care and more.</p>
+          <p className="mt-3 text-base text-charcoal/70">Shipping, payments, candle care and more.</p>
           <Link href="/faq" className="btn-outline mt-7">
             Read the FAQ
           </Link>

@@ -132,7 +132,7 @@ export default function FaqPage() {
       <Container className="max-w-3xl">
         <p className="eyebrow">Help</p>
         <h1 className="mt-3 text-5xl md:text-6xl">Questions, answered</h1>
-        <p className="mt-5 max-w-xl text-base font-light text-charcoal/70">
+        <p className="mt-5 max-w-xl text-base text-charcoal/70">
           Can&rsquo;t find what you&rsquo;re looking for?{" "}
           <Link href="/contact" className="underline underline-offset-4 hover:no-underline">
             Get in touch
@@ -148,11 +148,11 @@ export default function FaqPage() {
                 <details key={item.q} className="group py-5">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base [&::-webkit-details-marker]:hidden">
                     {item.q}
-                    <span className="text-xl font-light text-charcoal/50 transition-transform duration-400 group-open:rotate-45" aria-hidden="true">
+                    <span className="text-xl text-charcoal/60 transition-transform duration-400 group-open:rotate-45" aria-hidden="true">
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 max-w-2xl text-sm font-light leading-relaxed text-charcoal/75">{item.a}</p>
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-charcoal/75">{item.a}</p>
                 </details>
               ))}
             </div>

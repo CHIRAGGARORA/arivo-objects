@@ -35,7 +35,7 @@ export function Header() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-[11px] font-medium uppercase tracking-luxe text-charcoal/75 transition-colors duration-400 hover:text-charcoal"
+              className="text-xs font-medium uppercase tracking-luxe text-charcoal/75 transition-colors duration-400 hover:text-charcoal"
             >
               {link.label}
             </Link>
@@ -60,7 +60,7 @@ export function Header() {
           >
             <CartIcon />
             {itemCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-charcoal text-[10px] text-ivory">
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-charcoal text-xs text-ivory">
                 {itemCount}
               </span>
             )}

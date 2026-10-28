@@ -54,7 +54,7 @@ function ReviewCard({ review: r }: { review: PublicReview }) {
     <li className="mx-3 mb-6 flex w-[300px] shrink-0 flex-col border border-sand/70 bg-bone/40 p-7 md:w-[360px]">
       <Stars rating={r.rating} />
       <p className="mt-4 flex-1 font-display text-xl italic leading-snug">&ldquo;{r.body}&rdquo;</p>
-      <p className="mt-6 text-[11px] font-medium uppercase tracking-luxe">
+      <p className="mt-6 text-xs font-medium uppercase tracking-luxe">
         {r.authorName}
         {r.city ? `, ${r.city}` : ""}
       </p>

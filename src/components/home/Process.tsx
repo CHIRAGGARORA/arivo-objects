@@ -15,7 +15,7 @@ export function Process() {
         <ol className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-4">
           {steps.map((step, i) => (
             <li key={step.name} className="border-t border-charcoal pt-4">
-              <span className="text-xs text-charcoal/50">{`0${i + 1}`}</span>
+              <span className="text-xs text-charcoal/60">{`0${i + 1}`}</span>
               <p className="mt-2 font-display text-lg">{step.name}</p>
               <p className="mt-2 text-sm text-charcoal/70">{step.description}</p>
             </li>

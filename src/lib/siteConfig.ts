@@ -40,6 +40,16 @@ export interface SiteConfig {
    * deliberate "free shipping" choice).
    */
   shippingFeeInr: number | null;
+  /**
+   * Working days (Mon–Sat). Must match Merchant Center's delivery settings,
+   * the Shipping & Returns page and the product structured data, which all
+   * read from here.
+   */
+  delivery: {
+    handlingDays: { min: number; max: number }; // payment → dispatch
+    transitDays: { min: number; max: number }; // dispatch → doorstep
+    orderCutoffIst: string; // "HH:MM", orders after this count from the next working day
+  };
   socials: {
     instagram: string | null;
   };
@@ -65,6 +75,11 @@ export const siteConfig: SiteConfig = {
   // Free shipping, as promised in the announcement bar ("Free shipping").
   // Change both together if this ever changes.
   shippingFeeInr: 0,
+  delivery: {
+    handlingDays: { min: 0, max: 2 },
+    transitDays: { min: 3, max: 7 },
+    orderCutoffIst: "12:00",
+  },
   socials: {
     instagram: "https://www.instagram.com/arivoobjects/",
   },

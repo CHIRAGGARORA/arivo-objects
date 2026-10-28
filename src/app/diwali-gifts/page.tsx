@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { products, getProductBySlug, formatPrice, isSellable } from "@/lib/products";
 import { pageMetadata, SITE_URL } from "@/lib/seo";
 import { Product } from "@/types/product";
+import { siteConfig } from "@/lib/siteConfig";
 
 /**
  * Seasonal landing page for Instagram, WhatsApp and ads to point at
@@ -26,6 +27,7 @@ export const metadata = pageMetadata({
 export const revalidate = 300;
 
 const DIWALI = "Sunday, 8 November";
+const transit = siteConfig.delivery.transitDays;
 
 const budgets: { id: string; title: string; note: string; match: (p: Product) => boolean }[] = [
   { id: "under-500", title: "Under ₹500", note: "Return gifts, colleagues and Secret Santa.", match: (p) => p.price <= 500 },
@@ -90,7 +92,7 @@ const recipients = [
 const faqs = [
   {
     q: "Will my order arrive before Diwali?",
-    a: `Diwali falls on ${DIWALI}. We dispatch every order within 48 hours of payment, and delivery time after that depends on your pin code, so the earlier you order, the safer.`,
+    a: `Diwali falls on ${DIWALI}. We dispatch every order within 48 hours of payment, and delivery then usually takes ${transit.min}–${transit.max} working days depending on your pin code, so the earlier you order, the safer.`,
   },
   {
     q: "Is shipping free?",

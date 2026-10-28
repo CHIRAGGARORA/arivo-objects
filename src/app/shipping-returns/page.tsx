@@ -1,5 +1,6 @@
 import { Container } from "@/components/ui/Container";
 import { pageMetadata } from "@/lib/seo";
+import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata = pageMetadata({
   title: "Shipping & Returns",
@@ -8,6 +9,7 @@ export const metadata = pageMetadata({
 });
 
 export default function ShippingReturnsPage() {
+  const { transitDays } = siteConfig.delivery;
   return (
     <div className="py-16 md:py-24">
       <Container className="max-w-2xl">
@@ -18,7 +20,11 @@ export default function ShippingReturnsPage() {
             <h2 className="font-display text-xl text-charcoal">Shipping</h2>
             <p className="mt-2">
               <strong>Free shipping on every order.</strong> Orders are
-              dispatched within 48 hours of payment.
+              dispatched within 48 hours of payment, and delivery usually takes
+              a further {transitDays.min}–{transitDays.max} working days
+              (Monday to Saturday), depending on your pin code. Orders placed
+              after {siteConfig.delivery.orderCutoffIst} IST count from the next
+              working day.
             </p>
           </section>
           <section>

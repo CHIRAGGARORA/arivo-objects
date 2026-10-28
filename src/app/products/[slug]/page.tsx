@@ -53,6 +53,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const inStock = sellableVariantKeys().some((k) => k.startsWith(`${product.slug}/`) && !soldOut.includes(k));
   const productUrl = `${SITE_URL}/products/${product.slug}`;
+  const delivery = siteConfig.delivery;
   const photos = [
     ...new Set(product.variants.flatMap((v) => v.images.filter((i) => !i.isPlaceholder).map((i) => `${SITE_URL}${i.src}`))),
   ];
@@ -85,7 +86,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           shippingDestination: { "@type": "DefinedRegion", addressCountry: "IN" },
           deliveryTime: {
             "@type": "ShippingDeliveryTime",
-            handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 2, unitCode: "DAY" },
+            handlingTime: { "@type": "QuantitativeValue", minValue: delivery.handlingDays.min, maxValue: delivery.handlingDays.max, unitCode: "DAY" },
+            transitTime: { "@type": "QuantitativeValue", minValue: delivery.transitDays.min, maxValue: delivery.transitDays.max, unitCode: "DAY" },
+            cutoffTime: `${delivery.orderCutoffIst}:00+05:30`,
+            businessDays: {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d) => `https://schema.org/${d}`),
+            },
           },
         },
       }),

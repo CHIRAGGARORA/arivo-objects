@@ -26,6 +26,7 @@ export function setEnv(overrides: Record<string, string | undefined> = {}) {
     SHIPROCKET_API_PASSWORD: "fake-password",
     SHIPROCKET_PICKUP_LOCATION: "Studio",
     SHIPROCKET_PICKUP_PINCODE: "110001",
+    SHIPROCKET_AUTO_SHIP: undefined,
     CRON_SECRET: "cron-secret-for-tests",
     ADMIN_PASSWORD: "admin-password-for-tests",
     SITE_URL: "https://example.test",
@@ -106,7 +107,18 @@ export class Fakes {
   emailKeysSeen = new Set<string>();
   shiprocketOrders: { order_id: string; id: number; weight: number; total_discount?: number }[] = [];
   calls: string[] = [];
-  fail = { razorpayCreate: false, razorpayAll: false, resend: false as false | number, shiprocketCreate: false as false | number, shiprocketNetwork: false };
+  fail = {
+    razorpayCreate: false,
+    razorpayAll: false,
+    resend: false as false | number,
+    shiprocketCreate: false as false | number,
+    shiprocketNetwork: false,
+    shiprocketAwb: false as false | string,
+    shiprocketPickup: false as false | number,
+  };
+  /** shipment_id → AWB assigned in the fake Shiprocket. */
+  awbs = new Map<number, string>();
+  pickups: number[] = [];
   serviceable = true;
   /** Artificial latency so concurrent paths genuinely overlap. */
   latencyMs = 0;
@@ -190,7 +202,12 @@ export class Fakes {
           return res(200, {
             data: this.shiprocketOrders
               .filter((o) => o.order_id === q)
-              .map((o) => ({ id: o.id, channel_order_id: o.order_id, status: "NEW", shipments: [{ id: o.id + 1000, awb: null, courier: null }] })),
+              .map((o) => ({
+                id: o.id,
+                channel_order_id: o.order_id,
+                status: "NEW",
+                shipments: [{ id: o.id + 1000, awb: this.awbs.get(o.id + 1000) ?? null, courier: this.awbs.has(o.id + 1000) ? "Delhivery" : null }],
+              })),
           });
         }
         if (url.pathname === "/v1/external/orders/create/adhoc") {
@@ -198,6 +215,21 @@ export class Fakes {
           const o = { order_id: body.order_id, id: 5000 + this.shiprocketOrders.length, weight: body.weight, total_discount: body.total_discount };
           this.shiprocketOrders.push(o);
           return res(200, { order_id: o.id, shipment_id: o.id + 1000, status: "NEW", status_code: 1 });
+        }
+        if (url.pathname === "/v1/external/courier/assign/awb") {
+          if (this.fail.shiprocketAwb) {
+            return res(200, { awb_assign_status: 0, response: { data: { awb_assign_error: this.fail.shiprocketAwb } } });
+          }
+          const awb = `AWB${body.shipment_id}`;
+          this.awbs.set(body.shipment_id, awb);
+          return res(200, { awb_assign_status: 1, response: { data: { awb_code: awb, courier_name: "Delhivery", shipment_id: body.shipment_id } } });
+        }
+        if (url.pathname === "/v1/external/courier/generate/pickup") {
+          if (this.fail.shiprocketPickup) return res(this.fail.shiprocketPickup, { message: "Simulated pickup failure" });
+          const id = body.shipment_id[0];
+          if (this.pickups.includes(id)) return res(400, { message: "Already in Pickup Queue." });
+          this.pickups.push(id);
+          return res(200, { pickup_status: 1, response: { pickup_scheduled_date: "2026-10-29 10:00:00" } });
         }
         if (url.pathname === "/v1/external/settings/company/pickup") {
           return res(200, { data: { shipping_address: [{ pickup_location: "Studio" }] } });

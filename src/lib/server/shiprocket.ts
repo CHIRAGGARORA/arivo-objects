@@ -1,12 +1,14 @@
 import "server-only";
-import { config } from "./config";
+import { config, deployEnv } from "./config";
 import { getPackedSpec, isCompleteSpec } from "@/lib/shipping-specs";
 
 /**
- * Shiprocket integration — order creation only.
+ * Shiprocket integration.
  *
- * Deliberately NOT automated: courier selection, AWB assignment and pickup
- * scheduling. The owner does those in the Shiprocket dashboard.
+ * Every paid order is created in Shiprocket. When SHIPROCKET_AUTO_SHIP=true
+ * the courier is also assigned (by the courier priority set in the Shiprocket
+ * dashboard) and a pickup is requested. Auto-ship never runs on preview/test
+ * deployments, so test orders can't book real couriers.
  */
 
 const API = "https://apiv2.shiprocket.in/v1/external";
@@ -25,6 +27,11 @@ export class ShiprocketError extends Error {
 export function shiprocketConfigured(): boolean {
   const s = config.shiprocket();
   return Boolean(s.email && s.password && s.pickupLocation);
+}
+
+/** Owner opted in to automatic courier assignment + pickup (production only). */
+export function autoShipEnabled(): boolean {
+  return config.shiprocket().autoShip && deployEnv() !== "preview";
 }
 
 let cachedToken: { token: string; expiresAt: number; email: string } | null = null;
@@ -136,6 +143,7 @@ export interface ShipmentResult {
   awbCode: string | null;
   courierName: string | null;
   reusedExisting: boolean;
+  pickupScheduledDate?: string | null;
   note?: string;
 }
 
@@ -218,8 +226,15 @@ export async function createShipmentOrder(input: ShipmentOrderInput): Promise<Sh
   // Idempotency: if a previous attempt reached Shiprocket but we never
   // recorded the response, reuse that order instead of creating another.
   const existing = await findExisting(input.orderNumber);
-  if (existing) return existing;
+  const order = existing ?? (await createAdhoc(input, pickupLocation, pkg));
+  return autoShipEnabled() ? dispatch(order) : order;
+}
 
+async function createAdhoc(
+  input: ShipmentOrderInput,
+  pickupLocation: string,
+  pkg: ReturnType<typeof packageFor>
+): Promise<ShipmentResult> {
   const [first, ...rest] = input.customer.name.trim().split(/\s+/);
   const r = await call<{
     order_id?: number;
@@ -270,6 +285,52 @@ export async function createShipmentOrder(input: ShipmentOrderInput): Promise<Sh
     reusedExisting: false,
     note: pkg.note,
   };
+}
+
+/**
+ * Assigns a courier (AWB) and requests pickup. Safe to repeat: an AWB already
+ * on the shipment is reused, and "already in pickup queue" counts as done.
+ */
+async function dispatch(order: ShipmentResult): Promise<ShipmentResult> {
+  if (!order.shipmentId) {
+    throw new ShiprocketError(
+      `Shiprocket order ${order.shiprocketOrderId} has no shipment, so no courier could be booked. Ship it from the Shiprocket dashboard.`,
+      false
+    );
+  }
+  let { awbCode, courierName } = order;
+  if (!awbCode) {
+    const r = await call<{
+      awb_assign_status?: number;
+      message?: string;
+      response?: { data?: { awb_code?: string; courier_name?: string; awb_assign_error?: string } };
+    }>("POST", "/courier/assign/awb", { shipment_id: order.shipmentId });
+    const d = r.response?.data;
+    if (r.awb_assign_status !== 1 || !d?.awb_code) {
+      throw new ShiprocketError(
+        `Shiprocket order ${order.shiprocketOrderId} was created, but no courier could be assigned: ${(d?.awb_assign_error ?? r.message ?? "no reason given").slice(0, 300)}. Check the Shiprocket wallet balance and courier settings, then press Retry in /admin or ship it from the Shiprocket dashboard.`,
+        false
+      );
+    }
+    awbCode = d.awb_code;
+    courierName = d.courier_name ?? null;
+  }
+
+  let pickupScheduledDate: string | null = null;
+  try {
+    const r = await call<{ pickup_status?: number; message?: string; response?: { pickup_scheduled_date?: string } }>(
+      "POST",
+      "/courier/generate/pickup",
+      { shipment_id: [order.shipmentId] }
+    );
+    if (r.pickup_status !== 1 && !/already/i.test(r.message ?? "")) {
+      throw new ShiprocketError(`Courier ${courierName ?? ""} (AWB ${awbCode}) assigned, but the pickup request failed: ${(r.message ?? "no reason given").slice(0, 300)}`, true);
+    }
+    pickupScheduledDate = r.response?.pickup_scheduled_date ?? null;
+  } catch (err) {
+    if (!(err instanceof ShiprocketError && /already/i.test(err.message))) throw err;
+  }
+  return { ...order, awbCode, courierName, pickupScheduledDate };
 }
 
 /** Read-only: pickup location names saved in Shiprocket (for config checks). */

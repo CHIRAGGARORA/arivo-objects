@@ -167,7 +167,7 @@ ${itemsTable(d)}
 <p><strong>Customer</strong><br>${escapeHtml(d.customerName)}<br>${escapeHtml(d.customerEmail)}<br>${escapeHtml(d.customerPhone)}</p>
 <p><strong>Ship to</strong><br>${escapeHtml(addressText(d.address)).replace(/\n/g, "<br>")}</p>
 <p>Razorpay payment: ${escapeHtml(d.razorpayPaymentId)}</p>
-<p>If this order is not created in Shiprocket automatically, you will get a separate "Action needed — ship manually" email. Courier selection and pickup are always done by you in Shiprocket.</p>`),
+<p>If Shiprocket can't take this order automatically, you will get a separate "Action needed" email.</p>`),
     text: `New paid order ${d.orderNumber}\n\n${itemsText(d)}\n\nCustomer: ${d.customerName}, ${d.customerEmail}, ${d.customerPhone}\nShip to:\n${addressText(d.address)}\n\nRazorpay payment: ${d.razorpayPaymentId}`,
   };
 }
@@ -183,13 +183,13 @@ export function shippingAlertEmail(
     replyTo: d.customerEmail,
     subject: `Action needed — ship order ${d.orderNumber} manually (dispatch within 48 hours)`,
     html: wrap(`<h2 style="font-weight:normal">Ship order ${escapeHtml(d.orderNumber)} manually</h2>
-<p>This order is <strong>paid and saved</strong>. It was <strong>not</strong> sent to Shiprocket, and no shipment or label has been created:</p>
+<p>This order is <strong>paid and saved</strong>, but Shiprocket could not finish it automatically:</p>
 <p style="background:#f4f1ec;padding:12px">${escapeHtml(reason)}</p>
 <p>Please pack and dispatch it within 48 hours (create the shipment yourself in Shiprocket or with any courier).</p>
 ${itemsTable(d)}
 <p style="margin-top:16px"><strong>Ship to</strong><br>${escapeHtml(d.customerName)}<br>${addr}<br>Phone: ${escapeHtml(d.customerPhone)}</p>
-<p style="font-size:12px;color:#777">Once Shiprocket is set up, the admin page's "Retry failed steps" button can create the Shiprocket order instead.</p>`),
-    text: `Ship order ${d.orderNumber} manually.\n\nThis order is paid and saved. It was NOT sent to Shiprocket and no shipment or label was created:\n${reason}\n\nPlease dispatch within 48 hours.\n\n${itemsText(d)}\n\nShip to:\n${d.customerName}\n${addressText(d.address)}\nPhone: ${d.customerPhone}`,
+<p style="font-size:12px;color:#777">After fixing the cause, the admin page's "Retry failed steps" button tries Shiprocket again without creating a duplicate.</p>`),
+    text: `Ship order ${d.orderNumber} manually.\n\nThis order is paid and saved, but Shiprocket could not finish it automatically:\n${reason}\n\nPlease dispatch within 48 hours.\n\n${itemsText(d)}\n\nShip to:\n${d.customerName}\n${addressText(d.address)}\nPhone: ${d.customerPhone}`,
   };
 }
 

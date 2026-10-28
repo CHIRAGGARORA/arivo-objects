@@ -84,10 +84,14 @@ marked `noindex` and only ever runs Razorpay test keys — the code refuses
    address via Reply-To, so you don't need an `@arivoobjects.com` mailbox to
    start.
 
-## 4. Shiprocket — order creation only
+## 4. Shiprocket
 
-The site creates the Shiprocket order after payment. **Courier choice, AWB
-and pickup stay manual** in the Shiprocket dashboard.
+The site creates the Shiprocket order after payment. With
+`SHIPROCKET_AUTO_SHIP=true` (production only) it also assigns a courier — by
+the courier priority set in Shiprocket → Settings → Courier — and requests
+pickup. That charges the Shiprocket wallet; if the wallet is empty or no
+courier serves the PIN code, the order is flagged in /admin and you get an
+"Action needed" email. Without the flag, courier and pickup stay manual.
 
 1. Shiprocket → **Settings → Pickup Addresses**: add/confirm your pickup
    address. Note the **exact** pickup location name.

@@ -10,11 +10,23 @@ import "server-only";
 interface CouponDefinition {
   percentOff: number;
   firstOrderOnly: boolean;
+  /** Shown under the code in the checkout coupon picker. */
+  caption: string;
 }
 
 const COUPONS: Record<string, CouponDefinition> = {
-  FIRST5: { percentOff: 5, firstOrderOnly: true },
+  FIRST5: { percentOff: 5, firstOrderOnly: true, caption: "5% off your first order" },
 };
+
+export interface CouponOption {
+  code: string;
+  caption: string;
+}
+
+/** Public list for the checkout coupon picker (codes are not secret). */
+export function availableCoupons(): CouponOption[] {
+  return Object.entries(COUPONS).map(([code, c]) => ({ code, caption: c.caption }));
+}
 
 export interface AppliedCoupon {
   code: string;

@@ -58,7 +58,13 @@ function Field({
   );
 }
 
-export function CheckoutForm({ shippingFeeInr }: { shippingFeeInr: number | null }) {
+export function CheckoutForm({
+  shippingFeeInr,
+  coupons = [],
+}: {
+  shippingFeeInr: number | null;
+  coupons?: { code: string; caption: string }[];
+}) {
   const { lines, subtotal, allLinesSellable, clearCart } = useCart();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -72,6 +78,7 @@ export function CheckoutForm({ shippingFeeInr }: { shippingFeeInr: number | null
     error: null,
   });
   const [applied, setApplied] = useState<AppliedCoupon | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const shipping = shippingFeeInr ?? 0;
   const cartKey = lines.map((l) => `${l.productSlug}/${l.variantId}x${l.quantity}`).join(",");
   const coupon = applied && applied.cartKey === cartKey ? applied : null;
@@ -89,9 +96,11 @@ export function CheckoutForm({ shippingFeeInr }: { shippingFeeInr: number | null
     );
   }
 
-  async function applyCoupon(email?: string) {
-    const code = couponInput.trim();
+  async function applyCoupon(codeOverride?: string) {
+    const code = (codeOverride ?? couponInput).trim();
     if (!code) return;
+    // Lets the server say "first order only" straight away if the email has ordered before.
+    const email = (document.getElementById("customer.email") as HTMLInputElement | null)?.value.trim() || undefined;
     setCouponState({ checking: true, error: null });
     try {
       const res = await fetch("/api/coupons/check", {
@@ -310,10 +319,13 @@ export function CheckoutForm({ shippingFeeInr }: { shippingFeeInr: number | null
             <label htmlFor="coupon" className="text-sm">
               Coupon code
             </label>
-            <div className="mt-1.5 flex gap-2">
+            <div className="relative mt-1.5 flex gap-2">
               <input
                 id="coupon"
                 value={couponInput}
+                placeholder={coupons.length ? "Tap to see available coupons" : undefined}
+                onFocus={() => setPickerOpen(true)}
+                onBlur={() => setPickerOpen(false)}
                 onChange={(e) => setCouponInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -322,14 +334,37 @@ export function CheckoutForm({ shippingFeeInr }: { shippingFeeInr: number | null
                   }
                 }}
                 autoComplete="off"
-                className="min-w-0 flex-1 border border-sand bg-transparent px-3 py-2 text-sm uppercase focus:border-charcoal"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={pickerOpen && coupons.length > 0}
+                aria-controls="coupon-options"
+                className="min-w-0 flex-1 border border-sand bg-transparent px-3 py-2 text-sm uppercase placeholder:normal-case focus:border-charcoal"
               />
+              {pickerOpen && coupons.length > 0 && (
+                <ul id="coupon-options" role="listbox" className="absolute left-0 right-0 top-full z-10 mt-1 border border-sand bg-ivory shadow-sm">
+                  {coupons.map((c) => (
+                    <li key={c.code} role="option" aria-selected={false}>
+                      <button
+                        type="button"
+                        // mousedown fires before the input's blur, so the tap isn't lost.
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setCouponInput(c.code);
+                          setPickerOpen(false);
+                          void applyCoupon(c.code);
+                        }}
+                        className="w-full px-3 py-2.5 text-left hover:bg-bone"
+                      >
+                        <span className="block text-sm font-medium tracking-wide">{c.code}</span>
+                        <span className="block text-xs text-charcoal/60">{c.caption}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <button
                 type="button"
-                onClick={() => {
-                  const email = (document.getElementById("customer.email") as HTMLInputElement | null)?.value.trim();
-                  void applyCoupon(email || undefined);
-                }}
+                onClick={() => void applyCoupon()}
                 disabled={!couponInput.trim() || couponState.checking}
                 className="border border-charcoal px-4 py-2 text-xs tracking-wide transition-colors duration-400 hover:bg-charcoal hover:text-ivory disabled:opacity-40"
               >

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { Container } from "@/components/ui/Container";
 import { checkoutBlockReason, razorpayMode } from "@/lib/server/config";
+import { availableCoupons } from "@/lib/server/coupons";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function CheckoutPage() {
         {enabled ? (
           <CheckoutForm
             shippingFeeInr={siteConfig.shippingFeeInr}
+            coupons={availableCoupons()}
           />
         ) : (
           <p className="mt-8 text-sm text-charcoal/70">Online checkout isn&rsquo;t available yet.</p>

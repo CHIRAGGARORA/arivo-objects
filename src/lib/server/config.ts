@@ -41,6 +41,8 @@ export const config = {
     password: get("SHIPROCKET_API_PASSWORD"),
     pickupLocation: get("SHIPROCKET_PICKUP_LOCATION"),
     pickupPincode: get("SHIPROCKET_PICKUP_PINCODE"),
+    /** Also assign a courier and request pickup automatically. */
+    autoShip: get("SHIPROCKET_AUTO_SHIP") === "true",
   }),
 
   /** Salt for hashing client IPs in rate-limit keys. */
@@ -97,6 +99,7 @@ export function integrationStatus() {
       password: Boolean(s.password),
       pickupLocation: Boolean(s.pickupLocation),
       pickupPincode: Boolean(s.pickupPincode),
+      autoShip: s.autoShip && deployEnv() !== "preview",
     },
     cronSecret: Boolean(config.cronSecret()),
     adminPassword: Boolean(config.adminPassword()),

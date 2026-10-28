@@ -89,7 +89,7 @@ export default async function AdminPage() {
           Environment: <strong>{status.deployEnv}</strong> · Razorpay: <strong>{status.razorpay.mode}</strong> mode ·
           Checkout: {status.checkoutBlockReason ? <Badge tone="bad">blocked — {status.checkoutBlockReason}</Badge> : <Badge tone="ok">enabled</Badge>} ·
           Email: {status.resend.apiKey && status.resend.from && status.resend.ownerEmail ? <Badge tone="ok">configured</Badge> : <Badge tone="warn">incomplete</Badge>} ·
-          Shiprocket: {status.shiprocket.email && status.shiprocket.password && status.shiprocket.pickupLocation ? <Badge tone="ok">configured</Badge> : <Badge tone="warn">not configured</Badge>}
+          Shiprocket: {status.shiprocket.email && status.shiprocket.password && status.shiprocket.pickupLocation ? <Badge tone="ok">{status.shiprocket.autoShip ? "configured · auto courier + pickup" : "configured · orders only"}</Badge> : <Badge tone="warn">not configured</Badge>}
         </p>
         <p className="mt-1 text-charcoal/60">Detailed connectivity checks: <a className="underline" href="/api/health">/api/health</a></p>
       </section>
@@ -147,6 +147,8 @@ export default async function AdminPage() {
                       {ship?.result && (
                         <div className="text-xs text-charcoal/60">
                           Shiprocket order {String(ship.result.shiprocketOrderId)}
+                          {ship.result.awbCode ? <><br />{String(ship.result.courierName ?? "Courier")} · AWB {String(ship.result.awbCode)}</> : null}
+                          {ship.result.pickupScheduledDate ? <><br />Pickup {String(ship.result.pickupScheduledDate)}</> : null}
                           {ship.result.note ? <><br />{String(ship.result.note)}</> : null}
                         </div>
                       )}

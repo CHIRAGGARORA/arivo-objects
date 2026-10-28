@@ -348,7 +348,7 @@ describe("successful payment", () => {
     expect(fakes.emails.map((e) => e.to).sort()).toEqual(["customer@example.test", "owner@example.test"]);
     expect(fakes.shiprocketOrders).toHaveLength(1);
     expect(fakes.shiprocketOrders[0].weight).toBe(1.2);
-    // No courier/AWB/pickup calls are ever made.
+    // Auto-ship is off by default: no courier/AWB/pickup calls.
     expect(fakes.calls.some((c) => /assign|pickup\/|generate/.test(c))).toBe(false);
 
     const stock = await sql<{ quantity: number }>("SELECT quantity FROM inventory WHERE variant_id = 'black-marble'");
@@ -365,6 +365,80 @@ describe("successful payment", () => {
     const payment = fakes.pay(body.razorpayOrderId, { status: "authorized" });
     expect((await verifyPayment(body.razorpayOrderId, payment.id)).body.status).toBe("paid");
     expect(fakes.payments.get(payment.id)!.status).toBe("captured");
+  });
+});
+
+describe("automatic courier + pickup (SHIPROCKET_AUTO_SHIP)", () => {
+  async function shipResult(orderId: string) {
+    return (
+      await sql<{ result: Record<string, unknown> }>(
+        "SELECT result FROM order_tasks WHERE order_id = $1 AND task = 'shiprocket_order'",
+        [orderId]
+      )
+    )[0].result;
+  }
+
+  it("assigns a courier and requests pickup right after payment", async () => {
+    setEnv({ SHIPROCKET_AUTO_SHIP: "true" });
+    const { body } = await startCheckout();
+    await verifyPayment(body.razorpayOrderId, fakes.pay(body.razorpayOrderId).id);
+    const order = await orderRow(body.orderNumber);
+    expect((await tasks(order.id)).shiprocket_order.status).toBe("succeeded");
+    expect(fakes.shiprocketOrders).toHaveLength(1);
+    const shipmentId = fakes.shiprocketOrders[0].id + 1000;
+    expect(fakes.awbs.get(shipmentId)).toBe(`AWB${shipmentId}`);
+    expect(fakes.pickups).toEqual([shipmentId]);
+    expect(await shipResult(order.id)).toMatchObject({ awbCode: `AWB${shipmentId}`, courierName: "Delhivery" });
+    expect(fakes.emails.some((e) => /Action needed/.test(e.subject))).toBe(false);
+
+    const view = await (await orderStatus(new Request("https://example.test"), { params: Promise.resolve({ token: body.publicToken }) })).json();
+    expect(view.shipment.awbCode).toBe(`AWB${shipmentId}`);
+  });
+
+  it("never books a courier from a preview/test deployment", async () => {
+    await claimDatabaseFor("preview");
+    setEnv({ VERCEL_ENV: "preview", SHIPROCKET_AUTO_SHIP: "true" });
+    const { body } = await startCheckout();
+    await verifyPayment(body.razorpayOrderId, fakes.pay(body.razorpayOrderId).id);
+    expect(fakes.shiprocketOrders).toHaveLength(1);
+    expect(fakes.calls.some((c) => /assign|generate\/pickup/.test(c))).toBe(false);
+  });
+
+  it("alerts the owner when no courier can be assigned, and a retry finishes without duplicates", async () => {
+    setEnv({ SHIPROCKET_AUTO_SHIP: "true" });
+    fakes.fail.shiprocketAwb = "Insufficient wallet balance";
+    const { body } = await startCheckout();
+    await verifyPayment(body.razorpayOrderId, fakes.pay(body.razorpayOrderId).id);
+    const order = await orderRow(body.orderNumber);
+    let t = await tasks(order.id);
+    expect(t.shiprocket_order.status).toBe("needs_attention");
+    expect(t.shiprocket_order.last_error).toMatch(/was created, but no courier could be assigned: Insufficient wallet balance/);
+    const alert = fakes.emails.find((e) => /Action needed/.test(e.subject))!;
+    expect(alert.text).toMatch(/wallet/);
+
+    // Owner recharges the wallet, then a pickup hiccup, then retries.
+    fakes.fail.shiprocketAwb = false;
+    fakes.fail.shiprocketPickup = 503;
+    const auth = `Basic ${Buffer.from("admin:admin-password-for-tests").toString("base64")}`;
+    const retry = () =>
+      adminRetry(jsonRequest(`/api/admin/orders/${order.id}/retry`, {}, { authorization: auth }), { params: Promise.resolve({ id: order.id }) });
+    await retry();
+    t = await tasks(order.id);
+    expect(t.shiprocket_order.status).toBe("failed"); // retryable
+    expect(fakes.awbs.size).toBe(1);
+
+    fakes.fail.shiprocketPickup = false;
+    await retry();
+    expect((await tasks(order.id)).shiprocket_order.status).toBe("succeeded");
+
+    // A further forced run reuses the AWB and treats "already in pickup queue" as done.
+    await sql("UPDATE order_tasks SET status = 'failed' WHERE task = 'shiprocket_order'");
+    await retry();
+    expect((await tasks(order.id)).shiprocket_order.status).toBe("succeeded");
+    expect(fakes.shiprocketOrders).toHaveLength(1);
+    expect(fakes.awbs.size).toBe(1);
+    expect(fakes.pickups).toHaveLength(1);
+    expect(fakes.emails.filter((e) => /Action needed/.test(e.subject))).toHaveLength(1);
   });
 });
 

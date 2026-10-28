@@ -74,8 +74,8 @@ export default async function AdminPage() {
     ),
     query<{ count: string }>("SELECT count(*) FROM newsletter_subscribers WHERE status = 'subscribed'"),
     query<{ product_slug: string; variant_id: string; quantity: number }>("SELECT * FROM inventory"),
-    query<{ id: string; product_slug: string; rating: number; body: string; author_name: string; city: string | null; status: string; created_at: Date; order_number: string | null; source: keyof typeof SOURCE_LABEL }>(
-      `SELECT r.*, o.order_number FROM reviews r LEFT JOIN orders o ON o.id = r.order_id
+    query<{ id: string; product_slug: string; rating: number; body: string; author_name: string; city: string | null; status: string; created_at: Date; order_number: string | null; order_status: string | null; source: keyof typeof SOURCE_LABEL }>(
+      `SELECT r.*, o.order_number, o.status AS order_status FROM reviews r LEFT JOIN orders o ON o.id = r.order_id
         ORDER BY (r.status = 'pending') DESC, r.created_at DESC LIMIT 50`
     ),
   ]);
@@ -203,7 +203,11 @@ export default async function AdminPage() {
               {r.city ? `, ${r.city}` : ""} · {r.order_number ? `order ${r.order_number}` : SOURCE_LABEL[r.source]} · {when(r.created_at)}{" "}
               <Badge tone={r.status === "approved" ? "ok" : r.status === "rejected" ? "muted" : "warn"}>{r.status}</Badge>
               <p className="mt-1 whitespace-pre-wrap text-charcoal/80">{r.body}</p>
+              {r.order_status === "refunded" && r.status === "approved" && (
+                <p className="mt-1 text-xs text-amber-800">Hidden on the website: this order was refunded.</p>
+              )}
               {r.status === "pending" && <ReviewModeration reviewId={Number(r.id)} />}
+              {r.status === "approved" && <ReviewModeration reviewId={Number(r.id)} approved />}
             </li>
           ))}
           {reviews.length === 0 && <li className="text-charcoal/60">No reviews yet.</li>}

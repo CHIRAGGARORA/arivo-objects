@@ -116,9 +116,11 @@ function toPublic(r: ReviewRow): PublicReview {
 
 export async function approvedReviews(opts: { productSlug?: string; limit?: number } = {}): Promise<PublicReview[]> {
   const rows = await query<ReviewRow>(
-    `SELECT id, source, product_slug, rating, body, author_name, city, created_at FROM reviews
-      WHERE status = 'approved' AND ($1::text IS NULL OR product_slug = $1)
-      ORDER BY created_at DESC LIMIT $2`,
+    `SELECT r.id, r.source, r.product_slug, r.rating, r.body, r.author_name, r.city, r.created_at
+       FROM reviews r LEFT JOIN orders o ON o.id = r.order_id
+      WHERE r.status = 'approved' AND ($1::text IS NULL OR r.product_slug = $1)
+        AND (o.id IS NULL OR o.status <> 'refunded') -- a refunded order is no longer a verified purchase
+      ORDER BY r.created_at DESC LIMIT $2`,
     [opts.productSlug ?? null, opts.limit ?? 30]
   );
   return rows.map(toPublic);
@@ -127,7 +129,9 @@ export async function approvedReviews(opts: { productSlug?: string; limit?: numb
 export async function reviewSummary(productSlug: string): Promise<ReviewSummary> {
   const row = (
     await query<{ count: string; average: string | null }>(
-      "SELECT count(*) AS count, avg(rating) AS average FROM reviews WHERE status = 'approved' AND product_slug = $1",
+      `SELECT count(*) AS count, avg(r.rating) AS average
+         FROM reviews r LEFT JOIN orders o ON o.id = r.order_id
+        WHERE r.status = 'approved' AND r.product_slug = $1 AND (o.id IS NULL OR o.status <> 'refunded')`,
       [productSlug]
     )
   )[0];

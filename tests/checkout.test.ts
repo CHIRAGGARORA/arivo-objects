@@ -734,6 +734,11 @@ describe("verified-buyer reviews", () => {
     expect(pub).toHaveLength(1);
     expect(pub[0]).toMatchObject({ rating: 5, authorName: "Asha" });
     expect(await reviewSummary("small-oval-marble-tray")).toEqual({ count: 1, average: 5 });
+
+    // A refunded order is no longer a verified purchase: its review is hidden.
+    await sql("UPDATE orders SET status = 'refunded' WHERE public_token = $1", [token]);
+    expect(await approvedReviews()).toHaveLength(0);
+    expect(await reviewSummary("small-oval-marble-tray")).toEqual({ count: 0, average: 0 });
   });
 
   it("refuses reviews for unpaid orders, other products and unknown links", async () => {

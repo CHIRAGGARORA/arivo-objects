@@ -209,3 +209,63 @@ export function contactNotificationEmail(
     idempotencyKey: `contact-${m.id}`,
   };
 }
+
+export interface LowStockLine {
+  name: string;
+  variantLabel: string;
+  quantity: number;
+}
+
+export function lowStockEmail(lines: LowStockLine[], orderNumber: string, ownerEmail: string): Omit<EmailMessage, "idempotencyKey"> {
+  const list = lines.map((l) => `${l.name} — ${l.variantLabel}: ${l.quantity === 0 ? "SOLD OUT" : `${l.quantity} left`}`);
+  return {
+    to: ownerEmail,
+    subject: `Low stock after order ${orderNumber}`,
+    html: wrap(`<h2 style="font-weight:normal">Running low</h2>
+<p>After order ${escapeHtml(orderNumber)}, these are nearly out:</p>
+<ul>${list.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul>
+<p>Update stock in /admin when you restock. Sold-out items show "Sold out" on the website automatically.</p>`),
+    text: `After order ${orderNumber}, these are nearly out:\n${list.map((l) => `- ${l}`).join("\n")}\n\nUpdate stock in /admin when you restock.`,
+  };
+}
+
+export interface DailySummary {
+  dateLabel: string;
+  paidCount: number;
+  revenuePaise: number;
+  toShip: { orderNumber: string; name: string; city: string; paidAt: Date }[];
+  lowStock: LowStockLine[];
+  pendingReviews: number;
+  needsAttention: number;
+}
+
+export function dailySummaryEmail(d: DailySummary, ownerEmail: string): Omit<EmailMessage, "idempotencyKey"> {
+  const ageHours = (t: Date) => Math.max(0, Math.round((Date.now() - t.getTime()) / 3_600_000));
+  const ship = d.toShip.map((o) => `${o.orderNumber} — ${o.name}, ${o.city} (paid ${ageHours(o.paidAt)}h ago)`);
+  const low = d.lowStock.map((l) => `${l.name} — ${l.variantLabel}: ${l.quantity === 0 ? "SOLD OUT" : `${l.quantity} left`}`);
+  const section = (title: string, items: string[], empty: string) =>
+    `<h3 style="font-weight:normal;margin:20px 0 6px">${title}</h3>` +
+    (items.length ? `<ul style="margin:0;padding-left:18px">${items.map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>` : `<p style="margin:0;color:#777">${empty}</p>`);
+  return {
+    to: ownerEmail,
+    subject: `Arivo daily summary — ${d.dateLabel}: ${d.paidCount} order${d.paidCount === 1 ? "" : "s"}, ${rupees(d.revenuePaise)}`,
+    html: wrap(`<h2 style="font-weight:normal">Your day at Arivo — ${escapeHtml(d.dateLabel)}</h2>
+<p><strong>${d.paidCount}</strong> paid order${d.paidCount === 1 ? "" : "s"} · <strong>${rupees(d.revenuePaise)}</strong> received</p>
+${section("To ship (dispatch within 48 hours)", ship, "Nothing waiting to ship.")}
+${section("Low stock", low, "Stock levels are fine.")}
+<p style="margin-top:20px">${d.pendingReviews} review${d.pendingReviews === 1 ? "" : "s"} waiting for approval · ${d.needsAttention} order${d.needsAttention === 1 ? "" : "s"} needing attention</p>
+<p style="font-size:12px;color:#777">Manage everything at /admin.</p>`),
+    text: [
+      `Your day at Arivo — ${d.dateLabel}`,
+      `${d.paidCount} paid orders, ${rupees(d.revenuePaise)} received`,
+      "",
+      "To ship:",
+      ...(ship.length ? ship.map((s) => `- ${s}`) : ["- Nothing waiting to ship."]),
+      "",
+      "Low stock:",
+      ...(low.length ? low.map((s) => `- ${s}`) : ["- Stock levels are fine."]),
+      "",
+      `${d.pendingReviews} reviews waiting for approval; ${d.needsAttention} orders needing attention.`,
+    ].join("\n"),
+  };
+}

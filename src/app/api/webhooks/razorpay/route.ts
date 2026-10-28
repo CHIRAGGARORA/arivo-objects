@@ -3,6 +3,7 @@ import { verifyWebhookSignature } from "@/lib/server/razorpay";
 import { confirmPayment, markPaymentFailed, recordRefund } from "@/lib/server/orders";
 import { processOrderTasks } from "@/lib/server/tasks";
 import { query } from "@/lib/server/db";
+import { refreshStorefront } from "@/lib/server/storefront";
 import { json, runAfterResponse } from "@/lib/server/http";
 
 export const dynamic = "force-dynamic";
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
       case "refund.processed": {
         const refund = body.payload?.refund?.entity;
         if (refund?.id && refund.payment_id && refund.amount) {
-          await recordRefund(refund.payment_id, refund.id, refund.amount);
+          if ((await recordRefund(refund.payment_id, refund.id, refund.amount)) === "applied") refreshStorefront();
         }
         break;
       }

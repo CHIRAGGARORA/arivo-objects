@@ -314,3 +314,30 @@ export function OfflineReviewForm({
     </form>
   );
 }
+
+/** "Mark as shipped" / "Mark resolved" for one order. */
+export function OrderAction({ orderId, action, label }: { orderId: string; action: "shipped" | "resolve"; label: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  async function run() {
+    setBusy(true);
+    const res = await fetch(`/api/admin/orders/${orderId}/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ action }),
+    });
+    setBusy(false);
+    if (!res.ok) return setMsg(`Error ${res.status}`);
+    router.refresh();
+  }
+  return (
+    <span className="inline-flex items-center gap-2">
+      <button type="button" disabled={busy} onClick={run} className="border border-charcoal px-3 py-1 text-xs disabled:opacity-50">
+        {busy ? "Saving…" : label}
+      </button>
+      {msg && <span className="text-xs">{msg}</span>}
+    </span>
+  );
+}

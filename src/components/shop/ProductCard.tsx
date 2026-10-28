@@ -3,16 +3,21 @@ import { Product, ProductVariant } from "@/types/product";
 import { discountPercent, getGalleryImages, getMainImage, isSellable } from "@/lib/products";
 import { PriceTag } from "@/components/shop/PriceTag";
 import { ImageCycler } from "@/components/shop/ImageCycler";
+import { soldOutVariantKeys } from "@/lib/server/storefront";
 
 /**
  * One product, or one colour of it when `variant` is given (the shop grid
  * shows each tray colour as its own card, linking to that colour).
  */
-export function ProductCard({ product, variant }: { product: Product; variant?: ProductVariant }) {
+export async function ProductCard({ product, variant }: { product: Product; variant?: ProductVariant }) {
   const v = variant ?? product.variants[0];
   const main = getMainImage(v);
   const images = [main, ...getGalleryImages(v).filter((i) => i !== main && !i.isPlaceholder)];
   const sellable = isSellable(product);
+  // A colour card is sold out when that colour is; a product card when every sellable colour is.
+  const soldOutKeys = new Set(await soldOutVariantKeys());
+  const keys = (variant ? [variant] : product.variants).filter((x) => x.sellable).map((x) => `${product.slug}/${x.id}`);
+  const soldOut = sellable && keys.length > 0 && keys.every((k) => soldOutKeys.has(k));
   const href = variant ? `/products/${product.slug}?variant=${variant.id}` : `/products/${product.slug}`;
 
   return (
@@ -22,7 +27,8 @@ export function ProductCard({ product, variant }: { product: Product; variant?: 
           <ImageCycler images={images} sizes="(min-width: 768px) 33vw, 50vw" />
         </div>
         <div className="absolute left-3 top-3 z-10 flex gap-1.5">
-          {sellable && discountPercent(product) !== null && (
+          {soldOut && <span className="bg-charcoal px-2.5 py-1 text-xs font-semibold uppercase tracking-wide2 text-ivory">Sold out</span>}
+          {sellable && !soldOut && discountPercent(product) !== null && (
             <span className="bg-terracotta px-2.5 py-1 text-xs font-semibold uppercase tracking-wide2 text-ivory">
               {discountPercent(product)}% off
             </span>

@@ -3,6 +3,7 @@ import { isAdminAuthorized } from "@/lib/server/admin-auth";
 import { products } from "@/lib/products";
 import { query } from "@/lib/server/db";
 import { json, readJson } from "@/lib/server/http";
+import { refreshStorefront } from "@/lib/server/storefront";
 
 export const dynamic = "force-dynamic";
 
@@ -24,5 +25,6 @@ export async function POST(req: Request) {
      ON CONFLICT (product_slug, variant_id) DO UPDATE SET quantity = EXCLUDED.quantity, updated_at = now()`,
     [slug, variantId, quantity]
   );
+  refreshStorefront();
   return json({ ok: true });
 }

@@ -3,6 +3,7 @@ import { isAdminAuthorized } from "@/lib/server/admin-auth";
 import { addOfflineReview } from "@/lib/server/reviews";
 import { products } from "@/lib/products";
 import { json, readJson } from "@/lib/server/http";
+import { refreshStorefront } from "@/lib/server/storefront";
 
 export const dynamic = "force-dynamic";
 
@@ -28,5 +29,6 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await readJson(req));
   if (!parsed.success) return json({ error: "invalid_input", message: parsed.error.issues[0]?.message }, 400);
   const id = await addOfflineReview({ ...parsed.data, city: parsed.data.city || null });
+  refreshStorefront();
   return json({ ok: true, id });
 }

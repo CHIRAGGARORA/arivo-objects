@@ -64,6 +64,8 @@ interface CartContextValue {
   allLinesSellable: boolean;
   /** Whether a variant can be ordered online (decided by the server). */
   isSellable: (productSlug: string, variantId: string) => boolean;
+  /** Sellable but out of stock right now. */
+  isSoldOut: (productSlug: string, variantId: string) => boolean;
 }
 
 const STORAGE_KEY = "arivo-cart-v1";
@@ -99,11 +101,14 @@ export function CartProvider({
   children,
   checkoutEnabled = false,
   sellableVariants = [],
+  soldOutVariants = [],
 }: {
   children: ReactNode;
   checkoutEnabled?: boolean;
   /** "slug/variantId" keys the server allows to be ordered. */
   sellableVariants?: string[];
+  /** "slug/variantId" keys with no stock (from a cached stock read). */
+  soldOutVariants?: string[];
 }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -252,6 +257,11 @@ export function CartProvider({
     (productSlug: string, variantId: string) => sellableSet.has(`${productSlug}/${variantId}`),
     [sellableSet]
   );
+  const soldOutSet = useMemo(() => new Set(soldOutVariants), [soldOutVariants]);
+  const isSoldOut = useCallback(
+    (productSlug: string, variantId: string) => soldOutSet.has(`${productSlug}/${variantId}`),
+    [soldOutSet]
+  );
   const allLinesSellable = useMemo(
     () => lines.every((l) => isSellable(l.productSlug, l.variantId)),
     [lines, isSellable]
@@ -272,6 +282,7 @@ export function CartProvider({
     checkoutEnabled,
     allLinesSellable,
     isSellable,
+    isSoldOut,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

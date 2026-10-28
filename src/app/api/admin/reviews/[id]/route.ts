@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isAdminAuthorized } from "@/lib/server/admin-auth";
 import { moderateReview } from "@/lib/server/reviews";
 import { json, readJson } from "@/lib/server/http";
+import { refreshStorefront } from "@/lib/server/storefront";
 
 export const dynamic = "force-dynamic";
 
@@ -13,5 +14,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const parsed = schema.safeParse(await readJson(req));
   if (!parsed.success || !/^\d+$/.test(id)) return json({ error: "invalid_input" }, 400);
   const found = await moderateReview(Number(id), parsed.data.action);
+  if (found) refreshStorefront();
   return found ? json({ ok: true }) : json({ error: "not_found" }, 404);
 }

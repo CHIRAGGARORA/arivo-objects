@@ -1,13 +1,14 @@
 import { Container } from "@/components/ui/Container";
 import { Stars } from "@/components/reviews/Stars";
-import { approvedReviews, safely, SOURCE_LABEL, type PublicReview } from "@/lib/server/reviews";
+import { safely, SOURCE_LABEL, type PublicReview } from "@/lib/server/reviews";
+import { cachedApprovedReviews } from "@/lib/server/storefront";
 
 /**
  * Approved customer reviews scrolling sideways. Renders nothing until
  * real reviews exist — we never show sample or invented reviews.
  */
 export async function ReviewsMarquee() {
-  const reviews = await safely(() => approvedReviews({ limit: 20 }), []);
+  const reviews = await safely(() => cachedApprovedReviews(null, 20), []);
   if (reviews.length === 0) return null;
 
   // Repeat short lists so one half of the track is always wider than the screen.

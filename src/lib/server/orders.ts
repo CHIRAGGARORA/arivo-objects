@@ -8,18 +8,21 @@ import { CouponError } from "./coupons";
 import {
   capturePayment,
   createRazorpayOrder,
+  fetchOrderPayments,
   fetchPayment,
   RazorpayError,
   RazorpayPayment,
 } from "./razorpay";
 import { config } from "./config";
+import { refreshStorefront } from "./storefront";
 
 /**
  * Order lifecycle
  * ---------------------------------------------------------------------------
  *   pending ──(payment verified + captured, amount matches)──▶ paid
  *   pending ──(payment.failed)──▶ failed ──(later successful attempt)──▶ paid
- *   pending ──(abandoned > 48h)──▶ cancelled ──(late capture)──▶ paid
+ *   pending ──(48h, Razorpay confirms no payment)──▶ cancelled ──(late capture)──▶ paid
+ *   paid ──(full refund)──▶ refunded (stock restored if it hadn't shipped)
  *
  * The pending→paid transition is a single conditional UPDATE, so when the
  * browser verify call and the Razorpay webhook race, exactly one of them
@@ -30,6 +33,9 @@ import { config } from "./config";
  */
 
 export const FULFILMENT_TASKS = ["customer_email", "owner_email", "shiprocket_order"] as const;
+
+/** A sale that leaves a variant at or below this many gets a low-stock email. */
+export const LOW_STOCK_AT = 2;
 
 export interface CustomerInput {
   name: string;
@@ -292,7 +298,9 @@ export async function confirmPayment(razorpayOrderId: string, razorpayPaymentId:
   }
 
   if (payment.status === "captured") {
-    return markPaid(order.id, payment);
+    const result = await markPaid(order.id, payment);
+    if (result.outcome === "paid" && result.newlyPaid) refreshStorefront(); // stock changed
+    return result;
   }
   if (payment.status === "failed") {
     await query(
@@ -346,15 +354,25 @@ async function markPaid(orderId: string, payment: RazorpayPayment): Promise<Conf
       )
     ).rows;
     const short: string[] = [];
+    let lowStock = false;
     for (const item of items) {
-      const ok = (
-        await client.query(
+      const left = (
+        await client.query<{ quantity: number }>(
           `UPDATE inventory SET quantity = quantity - $3, updated_at = now()
-            WHERE product_slug = $1 AND variant_id = $2 AND quantity >= $3`,
+            WHERE product_slug = $1 AND variant_id = $2 AND quantity >= $3 RETURNING quantity`,
           [item.product_slug, item.variant_id, item.quantity]
         )
-      ).rowCount;
-      if (!ok) short.push(`${item.product_slug}/${item.variant_id} x${item.quantity}`);
+      ).rows[0];
+      if (!left) {
+        short.push(`${item.product_slug}/${item.variant_id} x${item.quantity}`);
+        continue;
+      }
+      await client.query("UPDATE order_items SET stock_taken = true WHERE order_id = $1 AND product_slug = $2 AND variant_id = $3", [
+        orderId,
+        item.product_slug,
+        item.variant_id,
+      ]);
+      if (left.quantity <= LOW_STOCK_AT) lowStock = true;
     }
     if (short.length) {
       await client.query("UPDATE orders SET attention_reason = COALESCE(attention_reason || E'\\n', '') || $2 WHERE id = $1", [
@@ -363,7 +381,7 @@ async function markPaid(orderId: string, payment: RazorpayPayment): Promise<Conf
       ]);
     }
 
-    for (const task of FULFILMENT_TASKS) {
+    for (const task of [...FULFILMENT_TASKS, ...(lowStock ? (["low_stock_email"] as const) : [])]) {
       await client.query(
         "INSERT INTO order_tasks (order_id, task) VALUES ($1, $2) ON CONFLICT (order_id, task) DO NOTHING",
         [orderId, task]
@@ -402,15 +420,73 @@ export async function recordRefund(
     if (!inserted) return "duplicate";
     const refunded = order.refunded_paise + amountPaise;
     const full = refunded >= order.total_paise;
-    const note = full
-      ? `Refunded in full (${refundId}). Stock was not restored automatically — add it back in Stock if the item was not shipped.`
-      : `Partial refund ₹${(amountPaise / 100).toFixed(2)} (${refundId}); ₹${(refunded / 100).toFixed(2)} of ₹${(order.total_paise / 100).toFixed(2)} refunded so far.`;
+    const rupees = (p: number) => `₹${(p / 100).toFixed(2)}`;
+
+    if (!full) {
+      // Partial refunds are a judgement call (damaged item? discount?): flag it.
+      await client.query(
+        `UPDATE orders SET refunded_paise = $2, refunded_at = now(),
+                attention_reason = COALESCE(attention_reason || E'\n', '') || $3, updated_at = now()
+          WHERE id = $1`,
+        [order.id, refunded, `Partial refund ${rupees(amountPaise)} (${refundId}); ${rupees(refunded)} of ${rupees(order.total_paise)} refunded so far. Stock unchanged.`]
+      );
+      return "applied";
+    }
+
+    // Full refund. If nothing has left the building — not marked shipped and no
+    // courier booked — put back exactly the stock this order took.
+    const state = (
+      await client.query<{ shipped: boolean; restocked: boolean }>(
+        `SELECT (o.shipped_at IS NOT NULL OR EXISTS (
+                   SELECT 1 FROM order_tasks t WHERE t.order_id = o.id AND t.task = 'shiprocket_order'
+                      AND t.status = 'succeeded' AND t.result->>'awbCode' IS NOT NULL)) AS shipped,
+                o.restocked_at IS NOT NULL AS restocked
+           FROM orders o WHERE o.id = $1`,
+        [order.id]
+      )
+    ).rows[0];
+    let note: string;
+    let attention: string | null = null;
+    if (state.shipped) {
+      note = `Refunded in full (${refundId}).`;
+      attention = `Refunded in full after shipping (${refundId}) — stock was not restored. Add it back in Stock if the item is returned.`;
+    } else if (state.restocked) {
+      note = `Refunded in full (${refundId}).`;
+    } else {
+      const restored = (
+        await client.query<{ product_slug: string; variant_id: string; quantity: number }>(
+          "SELECT product_slug, variant_id, quantity FROM order_items WHERE order_id = $1 AND stock_taken",
+          [order.id]
+        )
+      ).rows;
+      for (const r of restored) {
+        await client.query(
+          `INSERT INTO inventory (product_slug, variant_id, quantity) VALUES ($1, $2, $3)
+           ON CONFLICT (product_slug, variant_id) DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity, updated_at = now()`,
+          [r.product_slug, r.variant_id, r.quantity]
+        );
+      }
+      await client.query("UPDATE orders SET restocked_at = now() WHERE id = $1", [order.id]);
+      note = restored.length
+        ? `Refunded in full (${refundId}); stock restored automatically: ${restored.map((r) => `${r.product_slug}/${r.variant_id} +${r.quantity}`).join(", ")}.`
+        : `Refunded in full (${refundId}); no stock had been taken, so none was restored.`;
+    }
+
     await client.query(
-      `UPDATE orders SET refunded_paise = $2, refunded_at = now(),
-              status = CASE WHEN $3 THEN 'refunded' ELSE status END,
-              attention_reason = COALESCE(attention_reason || E'\n', '') || $4, updated_at = now()
+      `UPDATE orders SET refunded_paise = $2, refunded_at = now(), status = 'refunded',
+              notes = COALESCE(notes || E'\n', '') || $3,
+              attention_reason = CASE WHEN $4::text IS NULL THEN attention_reason
+                                      ELSE COALESCE(attention_reason || E'\n', '') || $4 END,
+              updated_at = now()
         WHERE id = $1`,
-      [order.id, refunded, full, note]
+      [order.id, refunded, note, attention]
+    );
+    // Nothing left to send or ship for a refunded order.
+    await client.query(
+      `UPDATE order_tasks SET status = 'succeeded', result = '{"skipped":"order refunded"}', last_error = NULL,
+              locked_until = NULL, updated_at = now()
+        WHERE order_id = $1 AND status <> 'succeeded'`,
+      [order.id]
     );
     return "applied";
   });
@@ -425,13 +501,66 @@ export async function markPaymentFailed(razorpayOrderId: string, reason: string)
   );
 }
 
-/** Abandoned checkouts. A late capture can still move these to paid. */
-export async function cancelStalePendingOrders(): Promise<number> {
-  const rows = await query(
-    `UPDATE orders SET status = 'cancelled', failure_reason = 'Checkout abandoned', updated_at = now()
-     WHERE status = 'pending' AND created_at < now() - interval '48 hours' RETURNING id`
+/**
+ * Daily check of unpaid checkouts older than 30 minutes. Asks Razorpay
+ * whether the customer actually paid (in case both the browser callback and
+ * the webhook were missed) and confirms those orders. Orders older than 48h
+ * with no payment are cancelled — but only when Razorpay could be asked.
+ */
+export async function reconcilePendingOrders(limit = 25): Promise<{ paidOrderIds: string[]; cancelled: number }> {
+  const pending = await query<{ id: string; razorpay_order_id: string | null; stale: boolean }>(
+    `SELECT id, razorpay_order_id, created_at < now() - interval '48 hours' AS stale
+       FROM orders WHERE status = 'pending' AND created_at < now() - interval '30 minutes'
+      ORDER BY created_at LIMIT $1`,
+    [limit]
   );
-  return rows.length;
+  const paidOrderIds: string[] = [];
+  let cancelled = 0;
+  for (const o of pending) {
+    if (o.razorpay_order_id) {
+      let payments: RazorpayPayment[];
+      try {
+        payments = await fetchOrderPayments(o.razorpay_order_id);
+      } catch {
+        continue; // Razorpay unreachable: never cancel on a guess.
+      }
+      const good = payments.find((p) => p.status === "captured" || p.status === "authorized");
+      if (good) {
+        const r = await confirmPayment(o.razorpay_order_id, good.id);
+        if (r.outcome === "paid") paidOrderIds.push(r.orderId);
+        continue;
+      }
+    }
+    if (o.stale) {
+      const rows = await query(
+        `UPDATE orders SET status = 'cancelled', failure_reason = 'Checkout abandoned', updated_at = now()
+          WHERE id = $1 AND status = 'pending' RETURNING id`,
+        [o.id]
+      );
+      cancelled += rows.length;
+    }
+  }
+  return { paidOrderIds, cancelled };
+}
+
+/** Owner marks an order as handed to the courier (manual shipping). */
+export async function markShipped(orderId: string): Promise<boolean> {
+  const rows = await query(
+    "UPDATE orders SET shipped_at = now(), updated_at = now() WHERE id = $1 AND status = 'paid' AND shipped_at IS NULL RETURNING id",
+    [orderId]
+  );
+  return rows.length > 0;
+}
+
+/** Owner has dealt with an order's warning: move it to the order's notes. */
+export async function resolveAttention(orderId: string): Promise<boolean> {
+  const rows = await query(
+    `UPDATE orders SET notes = COALESCE(notes || E'\n', '') || 'Resolved: ' || attention_reason,
+            attention_reason = NULL, updated_at = now()
+      WHERE id = $1 AND attention_reason IS NOT NULL RETURNING id`,
+    [orderId]
+  );
+  return rows.length > 0;
 }
 
 // ---------------------------------------------------------------------------

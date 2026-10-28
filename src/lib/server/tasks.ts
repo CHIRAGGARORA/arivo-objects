@@ -4,13 +4,14 @@ import { config } from "./config";
 import {
   customerConfirmationEmail,
   EmailError,
+  lowStockEmail,
   OrderEmailData,
   ownerOrderEmail,
   sendEmail,
   shippingAlertEmail,
 } from "./email";
 import { createShipmentOrder, ShiprocketError } from "./shiprocket";
-import { orderStatusUrl } from "./orders";
+import { LOW_STOCK_AT, orderStatusUrl } from "./orders";
 
 /**
  * Durable post-payment steps.
@@ -26,8 +27,8 @@ import { orderStatusUrl } from "./orders";
  * with the same order number.
  */
 
-export type TaskName = "customer_email" | "owner_email" | "shiprocket_order" | "shipping_alert_email";
-const ORDER: TaskName[] = ["customer_email", "owner_email", "shiprocket_order", "shipping_alert_email"];
+export type TaskName = "customer_email" | "owner_email" | "shiprocket_order" | "shipping_alert_email" | "low_stock_email";
+const ORDER: TaskName[] = ["customer_email", "owner_email", "shiprocket_order", "shipping_alert_email", "low_stock_email"];
 const LEASE = "2 minutes";
 
 class NonRetryable extends Error {}
@@ -160,6 +161,19 @@ async function run(orderId: string, task: TaskName): Promise<unknown> {
         discountPaise: data.discountPaise,
         shippingPaise: data.shippingPaise,
       });
+    case "low_stock_email": {
+      const low = await query<{ name: string; variant_label: string; quantity: number }>(
+        `SELECT i.name, i.variant_label, inv.quantity FROM order_items i
+           JOIN inventory inv ON inv.product_slug = i.product_slug AND inv.variant_id = i.variant_id
+          WHERE i.order_id = $1 AND inv.quantity <= $2 ORDER BY i.id`,
+        [orderId, LOW_STOCK_AT]
+      );
+      if (!low.length) return { skipped: "restocked since" };
+      return sendEmail({
+        ...lowStockEmail(low.map((l) => ({ name: l.name, variantLabel: l.variant_label, quantity: l.quantity })), orderNumber, ownerEmail()),
+        idempotencyKey: `order-${orderNumber}-low-stock`,
+      });
+    }
     case "shipping_alert_email": {
       const reason = (
         await query<{ last_error: string | null }>(

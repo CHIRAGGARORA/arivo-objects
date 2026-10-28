@@ -15,7 +15,7 @@ export function Reveal({ children, className = "", delayMs = 0 }: { children: Re
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
-        el.style.transitionDelay = `${delayMs}ms`;
+        el.style.transitionDelay = `${Math.min(delayMs, 240)}ms`;
         el.classList.replace("reveal-pending", "reveal-shown");
         io.disconnect();
       },

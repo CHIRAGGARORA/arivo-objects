@@ -77,6 +77,13 @@ export function fetchPayment(paymentId: string): Promise<RazorpayPayment> {
   return call<RazorpayPayment>("GET", `/payments/${paymentId}`);
 }
 
+/** Every payment attempt made against a Razorpay order. */
+export async function fetchOrderPayments(orderId: string): Promise<RazorpayPayment[]> {
+  if (!/^order_[A-Za-z0-9]+$/.test(orderId)) throw new RazorpayError("Invalid order id");
+  const r = await call<{ items?: RazorpayPayment[] }>("GET", `/orders/${orderId}/payments`);
+  return r.items ?? [];
+}
+
 export function capturePayment(paymentId: string, amountPaise: number): Promise<RazorpayPayment> {
   return call<RazorpayPayment>("POST", `/payments/${paymentId}/capture`, {
     amount: amountPaise,

@@ -10,12 +10,13 @@ import { siteConfig } from "@/lib/siteConfig";
 import { SITE_URL } from "@/lib/seo";
 import { checkoutBlockReason } from "@/lib/server/config";
 import { sellableVariantKeys } from "@/lib/server/catalog";
+import { soldOutVariantKeys } from "@/lib/server/storefront";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  weight: ["400", "500", "600"],
+  weight: ["400", "600"],
   style: ["normal", "italic"],
 });
 
@@ -23,7 +24,7 @@ const sans = Jost({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-  weight: ["300", "400", "500"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -51,7 +52,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${display.variable} ${sans.variable}`}>
-        <CartProvider checkoutEnabled={checkoutBlockReason() === null} sellableVariants={sellableVariantKeys()}>
+        <CartProvider
+          checkoutEnabled={checkoutBlockReason() === null}
+          sellableVariants={sellableVariantKeys()}
+          soldOutVariants={await soldOutVariantKeys()}
+        >
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-charcoal focus:text-ivory focus:px-4 focus:py-2"

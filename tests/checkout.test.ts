@@ -20,6 +20,7 @@ import { POST as webhook } from "@/app/api/webhooks/razorpay/route";
 import { GET as cron } from "@/app/api/cron/process-orders/route";
 import { GET as orderStatus } from "@/app/api/orders/[token]/route";
 import { POST as adminRetry } from "@/app/api/admin/orders/[id]/retry/route";
+import { POST as updateOrder } from "@/app/api/admin/orders/[id]/update/route";
 import { POST as postReview } from "@/app/api/reviews/route";
 import { POST as moderate } from "@/app/api/admin/reviews/[id]/route";
 import { POST as addOffline } from "@/app/api/admin/reviews/route";
@@ -242,17 +243,27 @@ describe("refunds", () => {
     return { body, payment };
   }
 
-  it("marks an order refunded on a full refund, once, and flags stock for review", async () => {
+  const stockOf = async (variant = "black-marble") =>
+    (await sql<{ quantity: number }>("SELECT quantity FROM inventory WHERE variant_id = $1", [variant]))[0].quantity;
+
+  it("marks an order refunded on a full refund, once, and puts unshipped stock back automatically", async () => {
     const { body, payment } = await paidOrder();
+    expect(await stockOf()).toBe(4);
     expect((await webhook(refundEvent(payment.id, "rfnd_A1", 85400))).status).toBe(200);
     expect((await webhook(refundEvent(payment.id, "rfnd_A1", 85400))).status).toBe(200); // re-delivered
-    const [o] = await sql<{ status: string; refunded_paise: number; attention_reason: string }>(
-      "SELECT status, refunded_paise, attention_reason FROM orders WHERE order_number = $1",
+    const [o] = await sql<{ id: string; status: string; refunded_paise: number; attention_reason: string | null; notes: string; restocked_at: Date | null }>(
+      "SELECT id, status, refunded_paise, attention_reason, notes, restocked_at FROM orders WHERE order_number = $1",
       [body.orderNumber]
     );
     expect(o.status).toBe("refunded");
     expect(o.refunded_paise).toBe(85400);
-    expect(o.attention_reason).toMatch(/Stock was not restored/);
+    expect(await stockOf()).toBe(5); // restored exactly once
+    expect(o.restocked_at).not.toBeNull();
+    expect(o.attention_reason).toBeNull(); // nothing for the owner to do
+    expect(o.notes).toMatch(/stock restored automatically: small-oval-marble-tray\/black-marble \+1/);
+    // Nothing left to send or ship for a refunded order.
+    const t = await tasks(o.id);
+    expect(Object.values(t).every((x) => x.status === "succeeded")).toBe(true);
     expect(await sql("SELECT 1 FROM refunds")).toHaveLength(1);
     const view = await (await orderStatus(new Request("https://example.test"), { params: Promise.resolve({ token: body.publicToken }) })).json();
     expect(view.status).toBe("refunded");
@@ -267,6 +278,41 @@ describe("refunds", () => {
     );
     expect(o.status).toBe("paid");
     expect(o.attention_reason).toMatch(/Partial refund ₹100\.00/);
+    expect(await stockOf()).toBe(4); // partial refunds never touch stock
+  });
+
+  it("doesn't restock an order that was already shipped — flags it instead", async () => {
+    const { body, payment } = await paidOrder();
+    const order = await orderRow(body.orderNumber);
+    const auth = `Basic ${Buffer.from("admin:admin-password-for-tests").toString("base64")}`;
+    const ship = () =>
+      updateOrder(jsonRequest(`/api/admin/orders/${order.id}/update`, { action: "shipped" }, { authorization: auth }), {
+        params: Promise.resolve({ id: order.id }),
+      });
+    expect((await ship()).status).toBe(200);
+    expect((await ship()).status).toBe(409); // already shipped
+
+    await webhook(refundEvent(payment.id, "rfnd_S1", 85400));
+    expect(await stockOf()).toBe(4);
+    const [o] = await sql<{ attention_reason: string }>("SELECT attention_reason FROM orders WHERE id = $1", [order.id]);
+    expect(o.attention_reason).toMatch(/after shipping/);
+
+    // "Mark resolved" moves the warning into the order's notes.
+    const resolve = await updateOrder(jsonRequest(`/api/admin/orders/${order.id}/update`, { action: "resolve" }, { authorization: auth }), {
+      params: Promise.resolve({ id: order.id }),
+    });
+    expect(resolve.status).toBe(200);
+    const [after] = await sql<{ attention_reason: string | null; notes: string }>("SELECT attention_reason, notes FROM orders WHERE id = $1", [order.id]);
+    expect(after.attention_reason).toBeNull();
+    expect(after.notes).toMatch(/Resolved: Refunded in full after shipping/);
+  });
+
+  it("emails the owner when a sale leaves an item at 2 or fewer", async () => {
+    await sql("UPDATE inventory SET quantity = 3 WHERE variant_id = 'black-marble'");
+    await paidOrder();
+    const low = fakes.emails.filter((e) => /Low stock/.test(e.subject));
+    expect(low).toHaveLength(1);
+    expect(low[0].text).toMatch(/Small Oval Marble Tray — Black Marble: 2 left/);
   });
 
   it("rejects a refund webhook with a bad signature", async () => {
@@ -553,7 +599,7 @@ describe("idempotency and concurrency", () => {
     const order = await orderRow(body.orderNumber);
     expect(order.status).toBe("paid");
     expect(fakes.emails.filter((e) => e.to === "customer@example.test")).toHaveLength(1);
-    expect(fakes.emails.filter((e) => e.to === "owner@example.test")).toHaveLength(1);
+    expect(fakes.emails.filter((e) => e.to === "owner@example.test" && !/daily summary/.test(e.subject))).toHaveLength(1);
     expect(fakes.shiprocketOrders).toHaveLength(1);
     const stock = await sql<{ quantity: number }>("SELECT quantity FROM inventory WHERE variant_id = 'black-marble'");
     expect(stock[0].quantity).toBe(4); // decremented exactly once
@@ -774,5 +820,55 @@ describe("verified-buyer reviews", () => {
     await expect(
       sql("INSERT INTO reviews (product_slug, rating, body, author_name, source) VALUES ('x', 5, 'ten chars plus', 'A', 'whatsapp')")
     ).rejects.toThrow(/reviews_source_rule/);
+  });
+});
+
+describe("daily job", () => {
+  const CRON = { headers: { authorization: "Bearer cron-secret-for-tests" } };
+  const age = (orderNumber: string, interval: string) =>
+    sql(`UPDATE orders SET created_at = now() - interval '${interval}' WHERE order_number = $1`, [orderNumber]);
+
+  it("confirms a payment the site missed instead of cancelling the order", async () => {
+    const { body } = await startCheckout();
+    fakes.pay(body.razorpayOrderId); // customer paid, but neither the browser nor the webhook reached us
+    await age(body.orderNumber, "3 days");
+    const res = await (await cron(new Request("https://example.test", CRON))).json();
+    expect(res.recoveredPayments).toBe(1);
+    expect(res.cancelled).toBe(0);
+    expect((await orderRow(body.orderNumber)).status).toBe("paid");
+    expect(fakes.emails.some((e) => e.to === "customer@example.test")).toBe(true);
+  });
+
+  it("cancels an abandoned checkout only after 48 hours, and never while Razorpay can't be asked", async () => {
+    const { body: fresh } = await startCheckout();
+    await age(fresh.orderNumber, "2 hours");
+    const { body: old } = await startCheckout([TRAY("terracotta-marble")]);
+    await age(old.orderNumber, "3 days");
+
+    fakes.fail.razorpayAll = true;
+    await cron(new Request("https://example.test", CRON));
+    expect((await orderRow(old.orderNumber)).status).toBe("pending");
+
+    fakes.fail.razorpayAll = false;
+    const res = await (await cron(new Request("https://example.test", CRON))).json();
+    expect(res.cancelled).toBe(1);
+    expect((await orderRow(old.orderNumber)).status).toBe("cancelled");
+    expect((await orderRow(fresh.orderNumber)).status).toBe("pending");
+  });
+
+  it("emails the owner a daily summary, once per day", async () => {
+    const { body } = await startCheckout();
+    await verifyPayment(body.razorpayOrderId, fakes.pay(body.razorpayOrderId).id);
+    await sql("UPDATE orders SET paid_at = now() - interval '1 day'");
+    await sql("UPDATE inventory SET quantity = 0 WHERE variant_id = 'terracotta-marble'");
+
+    await cron(new Request("https://example.test", CRON));
+    await cron(new Request("https://example.test", CRON));
+    const summaries = fakes.emails.filter((e) => /daily summary/.test(e.subject));
+    expect(summaries).toHaveLength(1);
+    expect(summaries[0].to).toBe("owner@example.test");
+    expect(summaries[0].subject).toMatch(/1 order, ₹899/);
+    expect(summaries[0].text).toMatch(new RegExp(`${body.orderNumber} — `));
+    expect(summaries[0].text).toMatch(/Terracotta Marble: SOLD OUT/);
   });
 });

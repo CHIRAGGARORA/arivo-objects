@@ -17,13 +17,14 @@ interface ProductInfoProps {
 
 export function ProductInfo({ product, variantId, onVariantChange }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
-  const { addItem, setLineQuantity, checkoutEnabled, isSellable } = useCart();
+  const { addItem, setLineQuantity, checkoutEnabled, isSellable, isSoldOut } = useCart();
   const router = useRouter();
 
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
-  const orderable = isSellable(product.slug, variant.id);
   // Products the catalogue marks as not for sale at all read "Coming soon".
   const comingSoon = product.sellable === false;
+  const soldOut = !comingSoon && isSoldOut(product.slug, variant.id);
+  const orderable = isSellable(product.slug, variant.id) && !soldOut;
 
   function handleBuyNow() {
     // Sets (not adds) the quantity, so pressing Buy Now on something
@@ -96,6 +97,8 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
         <p className="text-sm text-charcoal/60">
           {comingSoon
             ? "Coming soon"
+            : soldOut
+            ? "Sold out — back soon"
             : variant.inStock === false
             ? "Currently unavailable"
             : !orderable
@@ -111,7 +114,7 @@ export function ProductInfo({ product, variantId, onVariantChange }: ProductInfo
           disabled={!orderable}
           className="flex-1 bg-charcoal py-4 text-sm font-medium uppercase tracking-luxe text-ivory transition-opacity duration-400 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40"
         >
-          {comingSoon ? "Coming soon" : "Add to cart"}
+          {comingSoon ? "Coming soon" : soldOut ? "Sold out" : "Add to cart"}
         </button>
         <button
           type="button"

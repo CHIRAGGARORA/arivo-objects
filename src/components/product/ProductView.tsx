@@ -23,8 +23,8 @@ import { getGalleryImages, getLifestyleImage } from "@/lib/products";
  * at the source rather than patching around it.
  *
  * `initialVariantId` lets a link (e.g. the homepage's colourway section)
- * deep-link straight to a specific variant via ?variant=<id>. It's read
- * once, server-side, by the page and passed in here — if it doesn't match
+ * deep-link straight to a specific variant via ?variant=<id>. It's read in
+ * the browser by ProductViewFromUrl and passed in here — if it doesn't match
  * a real variant id for this product, this falls back to the first variant
  * exactly as before, so normal /products/<slug> links are unaffected.
  */

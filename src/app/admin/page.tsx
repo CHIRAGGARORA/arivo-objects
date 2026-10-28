@@ -7,7 +7,7 @@ import { config, integrationStatus } from "@/lib/server/config";
 import { query } from "@/lib/server/db";
 import { products } from "@/lib/products";
 import { getPackedSpec, isCompleteSpec } from "@/lib/shipping-specs";
-import { OfflineReviewForm, RetryButton, ReviewModeration, StockForm } from "@/components/admin/AdminControls";
+import { OfflineReviewForm, OrderAction, RetryButton, ReviewModeration, StockForm } from "@/components/admin/AdminControls";
 import { SOURCE_LABEL } from "@/lib/server/reviews";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
@@ -22,6 +22,8 @@ interface OrderRow {
   order_number: string;
   status: string;
   attention_reason: string | null;
+  notes: string | null;
+  shipped_at: Date | null;
   total_paise: number;
   shipping_address: { name: string; email: string; phone: string; city: string; pincode: string };
   razorpay_payment_id: string | null;
@@ -62,7 +64,7 @@ export default async function AdminPage() {
 
   const [orders, contacts, subs, stock, reviews] = await Promise.all([
     query<OrderRow>(
-      `SELECT o.id, o.order_number, o.status, o.attention_reason, o.total_paise, o.shipping_address,
+      `SELECT o.id, o.order_number, o.status, o.attention_reason, o.notes, o.shipped_at, o.total_paise, o.shipping_address,
               o.razorpay_payment_id, o.failure_reason, o.created_at, o.paid_at, o.coupon_code,
               (SELECT json_agg(json_build_object('task', t.task, 'status', t.status, 'attempts', t.attempts,
                        'last_error', t.last_error, 'result', t.result) ORDER BY t.id)
@@ -81,8 +83,11 @@ export default async function AdminPage() {
   ]);
   const pendingReviews = reviews.filter((r) => r.status === "pending");
   const stockMap = new Map(stock.map((s) => [`${s.product_slug}/${s.variant_id}`, s.quantity]));
+  // A refunded order has nothing left to send or ship: only its own warning counts.
   const attention = orders.filter(
-    (o) => o.attention_reason || o.tasks?.some((t) => t.status === "needs_attention" || t.status === "failed")
+    (o) =>
+      o.attention_reason ||
+      (o.status === "paid" && o.tasks?.some((t) => t.status === "needs_attention" || t.status === "failed"))
   );
 
   return (
@@ -115,7 +120,12 @@ export default async function AdminPage() {
                     <Badge tone={taskTone(t.status)}>{t.task}: {t.status}</Badge> {t.last_error}
                   </p>
                 ))}
-                {o.status === "paid" && <RetryButton orderId={o.id} />}
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {o.status === "paid" && o.tasks?.some((t) => t.status === "needs_attention" || t.status === "failed") && (
+                    <RetryButton orderId={o.id} />
+                  )}
+                  {o.attention_reason && <OrderAction orderId={o.id} action="resolve" label="Mark resolved" />}
+                </div>
               </li>
             ))}
           </ul>
@@ -145,10 +155,21 @@ export default async function AdminPage() {
                       <Badge tone={orderTone(o.status)}>{o.status}</Badge>
                       {o.razorpay_payment_id && <div className="text-xs text-charcoal/60">{o.razorpay_payment_id}</div>}
                       {o.status !== "paid" && o.failure_reason && <div className="text-xs text-charcoal/60">{o.failure_reason}</div>}
+                      {o.status === "paid" &&
+                        (o.shipped_at ? (
+                          <div className="mt-1"><Badge tone="ok">shipped {when(o.shipped_at)}</Badge></div>
+                        ) : (
+                          <div className="mt-1"><OrderAction orderId={o.id} action="shipped" label="Mark as shipped" /></div>
+                        ))}
+                      {o.notes && <div className="mt-1 whitespace-pre-wrap text-xs text-charcoal/70">{o.notes}</div>}
                     </td>
                     <td className="space-y-1">
                       {o.tasks?.map((t) => (
-                        <div key={t.task}><Badge tone={taskTone(t.status)}>{t.task.replace(/_/g, " ")}: {t.status}</Badge></div>
+                        <div key={t.task}>
+                          <Badge tone={t.result && "skipped" in t.result ? "muted" : taskTone(t.status)}>
+                            {t.task.replace(/_/g, " ")}: {t.result && "skipped" in t.result ? `skipped (${String(t.result.skipped)})` : t.status}
+                          </Badge>
+                        </div>
                       )) ?? <span className="text-charcoal/50">—</span>}
                       {ship?.result && (
                         <div className="text-xs text-charcoal/60">

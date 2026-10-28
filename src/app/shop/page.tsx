@@ -1,6 +1,7 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { ShopFilter, ShopGrid, type ShopCard } from "@/components/shop/ShopFilter";
 import { products } from "@/lib/products";
 import { pageMetadata } from "@/lib/seo";
 
@@ -10,33 +11,30 @@ export const metadata = pageMetadata({
   path: "/shop",
 });
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ colour?: string; category?: string }>;
-}) {
-  const params = await searchParams;
-  const colour = params.colour;
-  const category = params.category === "candle" || params.category === "tray"
-    ? params.category
-    : undefined;
+// Prebuilt and served from the cache (filtering happens in the browser);
+// refreshed in the background so "Sold out" stays current.
+export const revalidate = 300;
 
-  // "Shop by colourway" on the homepage links here with ?colour=<variant id>.
-  // Filter to products that actually offer that variant, rather than
-  // ignoring the parameter — same grid, same cards, just a subset of them.
-  const matchedVariant = colour
-    ? products.flatMap((p) => p.variants).find((v) => v.id === colour)
-    : undefined;
-  const byColour = colour
-    ? products.filter((p) => p.variants.some((v) => v.id === colour))
-    : products;
-  const visibleProducts = category ? byColour.filter((p) => p.category === category) : byColour;
-
-  const tabs = [
-    { label: "All", href: "/shop", active: !category },
-    { label: "Candles", href: "/shop?category=candle", active: category === "candle" },
-    { label: "Trays", href: "/shop?category=tray", active: category === "tray" },
-  ];
+export default function ShopPage() {
+  // A product sold in several colours gets one card per colour.
+  const cards: ShopCard[] = products.flatMap((product) =>
+    product.variants.length > 1 && (product.variantLabel ?? "Colour") === "Colour"
+      ? product.variants.map((v) => ({
+          key: `${product.slug}/${v.id}`,
+          category: product.category,
+          variantIds: [v.id],
+          node: <ProductCard product={product} variant={v} />,
+        }))
+      : [
+          {
+            key: product.slug,
+            category: product.category,
+            variantIds: product.variants.map((v) => v.id),
+            node: <ProductCard product={product} />,
+          },
+        ]
+  );
+  const colourLabels = Object.fromEntries(products.flatMap((p) => p.variants.map((v) => [v.id, v.label])));
 
   return (
     <div className="py-16 md:py-20">
@@ -46,45 +44,9 @@ export default async function ShopPage({
         <p className="mt-3 max-w-md text-sm text-charcoal/70">
           Home decor and gifts. Free shipping on every order, dispatched within 48 hours.
         </p>
-
-        <nav aria-label="Filter by category" className="mt-6 flex gap-2">
-          {tabs.map((t) => (
-            <Link
-              key={t.label}
-              href={t.href}
-              aria-current={t.active ? "page" : undefined}
-              className={`rounded-full border px-5 py-2 text-xs font-medium uppercase tracking-luxe transition-colors duration-400 ${
-                t.active
-                  ? "border-charcoal bg-charcoal text-ivory"
-                  : "border-sand text-charcoal/80 hover:border-charcoal"
-              }`}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </nav>
-
-        {colour && (
-          <p className="mt-4 text-sm text-charcoal/70">
-            Showing: {matchedVariant?.label ?? colour}
-            {" · "}
-            <Link href="/shop" className="underline hover:no-underline">
-              View all
-            </Link>
-          </p>
-        )}
-
-        <div id="collection" className="mt-12 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 md:gap-x-8 md:gap-y-14">
-          {visibleProducts.flatMap((product) =>
-            // A product sold in several colours gets one card per colour
-            // (filtered to the requested colour, if any).
-            product.variants.length > 1 && (product.variantLabel ?? "Colour") === "Colour"
-              ? product.variants
-                  .filter((v) => !colour || v.id === colour)
-                  .map((v) => <ProductCard key={`${product.slug}/${v.id}`} product={product} variant={v} />)
-              : [<ProductCard key={product.slug} product={product} />]
-          )}
-        </div>
+        <Suspense fallback={<ShopGrid cards={cards} />}>
+          <ShopFilter cards={cards} colourLabels={colourLabels} />
+        </Suspense>
       </Container>
     </div>
   );

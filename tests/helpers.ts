@@ -177,6 +177,10 @@ export class Fakes {
           return res(200, { ...o, status: "created" });
         }
         if (method === "GET" && url.pathname === "/v1/orders") return res(200, { items: [] });
+        const orderPayments = url.pathname.match(/^\/v1\/orders\/(order_[A-Za-z0-9]+)\/payments$/);
+        if (method === "GET" && orderPayments) {
+          return res(200, { items: [...this.payments.values()].filter((p) => p.order_id === orderPayments[1]) });
+        }
         const pay = url.pathname.match(/^\/v1\/payments\/(pay_[A-Za-z0-9]+)(\/capture)?$/);
         if (pay) {
           const p = this.payments.get(pay[1]);

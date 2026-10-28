@@ -12,9 +12,14 @@ const TOUCH_MS = 2600;
  * mouse, or slowly while on screen on touch devices; the arrows and dots let
  * shoppers flip through by hand (which stops the automatic cycling). Shows
  * the first photo only when the visitor prefers reduced motion.
+ *
+ * Only the first photo loads with the page; the rest are added the first time
+ * someone hovers, taps an arrow or (on touch screens) scrolls the card into
+ * view, so the shop page downloads far less up front.
  */
 export function ImageCycler({ images, sizes }: { images: ProductImage[]; sizes: string }) {
   const [active, setActive] = useState(0);
+  const [armed, setArmed] = useState(false); // extra photos mounted
   const ref = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const manual = useRef(false);
@@ -22,8 +27,9 @@ export function ImageCycler({ images, sizes }: { images: ProductImage[]; sizes: 
 
   function start(ms: number) {
     if (!many || timer.current || manual.current) return;
+    setArmed(true);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    setActive((i) => (i + 1) % images.length);
+    // First change after one interval, giving the next photo time to load.
     timer.current = setInterval(() => setActive((i) => (i + 1) % images.length), ms);
   }
 
@@ -39,6 +45,7 @@ export function ImageCycler({ images, sizes }: { images: ProductImage[]; sizes: 
     e.stopPropagation();
     manual.current = true;
     stop(false);
+    setArmed(true);
     setActive((to + images.length) % images.length);
   }
 
@@ -69,7 +76,7 @@ export function ImageCycler({ images, sizes }: { images: ProductImage[]; sizes: 
         stop(true);
       }}
     >
-      {images.map((img, i) => (
+      {images.slice(0, armed ? images.length : 1).map((img, i) => (
         <div
           key={img.src}
           className={`${i === 0 ? "" : "absolute inset-0"} transition-opacity duration-700 ${i === active ? "opacity-100" : "opacity-0"}`}

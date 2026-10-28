@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { ProductView } from "@/components/product/ProductView";
+import { ProductViewFromUrl } from "@/components/product/ProductViewFromUrl";
 import { ProductAccordion } from "@/components/product/ProductAccordion";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { products, getProductBySlug, getRelatedProducts } from "@/lib/products";
@@ -8,7 +10,12 @@ import { pageMetadata, SITE_URL } from "@/lib/seo";
 import { siteConfig } from "@/lib/siteConfig";
 import { CandleDetails } from "@/types/product";
 import { ProductReviews } from "@/components/reviews/ProductReviews";
-import { approvedReviews, reviewSummary, safely } from "@/lib/server/reviews";
+import { safely } from "@/lib/server/reviews";
+import { cachedApprovedReviews, cachedReviewSummary } from "@/lib/server/storefront";
+
+// Prebuilt and served from the cache; refreshed in the background at most
+// every 5 minutes, and straight after a sale, refund or review change.
+export const revalidate = 300;
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -29,22 +36,15 @@ function isCandleDetails(d: unknown): d is CandleDetails {
   return typeof d === "object" && d !== null && "waxType" in d;
 }
 
-export default async function ProductPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ variant?: string }>;
-}) {
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { variant: requestedVariant } = await searchParams;
   const product = getProductBySlug(slug);
   if (!product) notFound();
 
   const related = getRelatedProducts(product.slug);
   const [reviews, summary] = await Promise.all([
-    safely(() => approvedReviews({ productSlug: product.slug, limit: 20 }), []),
-    safely(() => reviewSummary(product.slug), { count: 0, average: 0 }),
+    safely(() => cachedApprovedReviews(product.slug, 20), []),
+    safely(() => cachedReviewSummary(product.slug), { count: 0, average: 0 }),
   ]);
   const details = product.details;
   const candle = isCandleDetails(details) ? details : null;
@@ -80,7 +80,9 @@ export default async function ProductPage({
   return (
     <div className="py-12 md:py-16">
       <Container>
-        <ProductView product={product} initialVariantId={requestedVariant} />
+        <Suspense fallback={<ProductView product={product} />}>
+          <ProductViewFromUrl product={product} />
+        </Suspense>
 
         <div className="mx-auto mt-16 max-w-2xl md:mt-24">
           <ProductAccordion

@@ -22,6 +22,7 @@ import { GET as orderStatus } from "@/app/api/orders/[token]/route";
 import { POST as adminRetry } from "@/app/api/admin/orders/[id]/retry/route";
 import { POST as postReview } from "@/app/api/reviews/route";
 import { POST as moderate } from "@/app/api/admin/reviews/[id]/route";
+import { POST as addOffline } from "@/app/api/admin/reviews/route";
 import { approvedReviews, reviewSummary } from "@/lib/server/reviews";
 import { resetPool } from "@/lib/server/db";
 
@@ -746,5 +747,32 @@ describe("verified-buyer reviews", () => {
     expect((await review({ token: "00000000-0000-4000-8000-000000000000" })).status).toBe(404);
     expect((await review({ token, rating: 0 })).status).toBe(400);
     expect(await sql("SELECT 1 FROM reviews")).toHaveLength(0);
+  });
+
+  it("lets the owner add a consented offline review, labelled with where it was bought", async () => {
+    const base = {
+      productSlug: "scented-candle-jar-pack-of-4",
+      rating: 4,
+      body: "Lovely scent, the tins look great on my shelf.",
+      authorName: "Priya S.",
+      city: "Pune",
+      source: "instagram",
+      reviewedOn: "2026-10-01",
+      consent: true,
+    };
+    expect((await addOffline(jsonRequest("/api/admin/reviews", base))).status).toBe(401);
+    // Consent is mandatory, future dates and unknown products are refused.
+    for (const bad of [{ consent: false }, { reviewedOn: "2999-01-01" }, { productSlug: "nope" }, { source: "website" }]) {
+      expect((await addOffline(jsonRequest("/api/admin/reviews", { ...base, ...bad }, { authorization: ADMIN }))).status).toBe(400);
+    }
+    expect((await addOffline(jsonRequest("/api/admin/reviews", base, { authorization: ADMIN }))).status).toBe(200);
+
+    const [r] = await approvedReviews({ productSlug: "scented-candle-jar-pack-of-4" });
+    expect(r).toMatchObject({ source: "instagram", authorName: "Priya S.", city: "Pune", rating: 4 });
+    expect(r.createdAt.slice(0, 10)).toBe("2026-10-01");
+    // The database itself refuses an offline review without consent.
+    await expect(
+      sql("INSERT INTO reviews (product_slug, rating, body, author_name, source) VALUES ('x', 5, 'ten chars plus', 'A', 'whatsapp')")
+    ).rejects.toThrow(/reviews_source_rule/);
   });
 });

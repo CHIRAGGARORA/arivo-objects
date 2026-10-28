@@ -1,5 +1,5 @@
 import { Stars } from "@/components/reviews/Stars";
-import type { PublicReview, ReviewSummary } from "@/lib/server/reviews";
+import { SOURCE_LABEL, type PublicReview, type ReviewSummary } from "@/lib/server/reviews";
 
 const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
@@ -8,7 +8,7 @@ export function ProductReviews({ reviews, summary }: { reviews: PublicReview[]; 
     <section className="mx-auto mt-20 max-w-3xl md:mt-28" id="reviews">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-sand/70 pb-6">
         <div>
-          <p className="eyebrow">Verified buyers</p>
+          <p className="eyebrow">Customer reviews</p>
           <h2 className="mt-3 text-4xl">Reviews</h2>
         </div>
         {summary.count > 0 && (
@@ -33,7 +33,7 @@ export function ProductReviews({ reviews, summary }: { reviews: PublicReview[]; 
                   {r.authorName}
                   {r.city ? `, ${r.city}` : ""}
                 </span>{" "}
-                · Verified buyer · {fmt(r.createdAt)}
+                · {SOURCE_LABEL[r.source]} · {fmt(r.createdAt)}
               </p>
             </li>
           ))}

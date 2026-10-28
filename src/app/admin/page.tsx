@@ -7,7 +7,8 @@ import { config, integrationStatus } from "@/lib/server/config";
 import { query } from "@/lib/server/db";
 import { products } from "@/lib/products";
 import { getPackedSpec, isCompleteSpec } from "@/lib/shipping-specs";
-import { RetryButton, ReviewModeration, StockForm } from "@/components/admin/AdminControls";
+import { OfflineReviewForm, RetryButton, ReviewModeration, StockForm } from "@/components/admin/AdminControls";
+import { SOURCE_LABEL } from "@/lib/server/reviews";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -73,8 +74,8 @@ export default async function AdminPage() {
     ),
     query<{ count: string }>("SELECT count(*) FROM newsletter_subscribers WHERE status = 'subscribed'"),
     query<{ product_slug: string; variant_id: string; quantity: number }>("SELECT * FROM inventory"),
-    query<{ id: string; product_slug: string; rating: number; body: string; author_name: string; city: string | null; status: string; created_at: Date; order_number: string }>(
-      `SELECT r.*, o.order_number FROM reviews r JOIN orders o ON o.id = r.order_id
+    query<{ id: string; product_slug: string; rating: number; body: string; author_name: string; city: string | null; status: string; created_at: Date; order_number: string | null; source: keyof typeof SOURCE_LABEL }>(
+      `SELECT r.*, o.order_number FROM reviews r LEFT JOIN orders o ON o.id = r.order_id
         ORDER BY (r.status = 'pending') DESC, r.created_at DESC LIMIT 50`
     ),
   ]);
@@ -199,7 +200,7 @@ export default async function AdminPage() {
           {reviews.map((r) => (
             <li key={r.id} className={`border p-3 ${r.status === "pending" ? "border-amber-200 bg-amber-50/40" : "border-sand/70"}`}>
               <strong>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</strong> {r.product_slug} · {r.author_name}
-              {r.city ? `, ${r.city}` : ""} · order {r.order_number} · {when(r.created_at)}{" "}
+              {r.city ? `, ${r.city}` : ""} · {r.order_number ? `order ${r.order_number}` : SOURCE_LABEL[r.source]} · {when(r.created_at)}{" "}
               <Badge tone={r.status === "approved" ? "ok" : r.status === "rejected" ? "muted" : "warn"}>{r.status}</Badge>
               <p className="mt-1 whitespace-pre-wrap text-charcoal/80">{r.body}</p>
               {r.status === "pending" && <ReviewModeration reviewId={Number(r.id)} />}
@@ -207,6 +208,7 @@ export default async function AdminPage() {
           ))}
           {reviews.length === 0 && <li className="text-charcoal/60">No reviews yet.</li>}
         </ul>
+        <OfflineReviewForm productOptions={products.map((p) => ({ slug: p.slug, name: p.name }))} />
       </section>
 
       <section className="mt-10">

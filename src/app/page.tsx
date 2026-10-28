@@ -9,7 +9,7 @@ import { ReviewsMarquee } from "@/components/reviews/ReviewsMarquee";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Arivo Objects — Home decor & gifts",
+  title: "Marble Trays & Scented Candle Gift Sets",
   description:
     "Design-led home decor and gifts: scented candle jar sets and marble trays. Free shipping, dispatched within 48 hours.",
   path: "/",

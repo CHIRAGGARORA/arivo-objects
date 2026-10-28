@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Jost } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -42,6 +43,35 @@ export const metadata: Metadata = {
     images: [{ url: "/brand/arivo-og.png" }],
     locale: "en_IN",
   },
+  // Google Search Console "HTML tag" verification. Set GOOGLE_SITE_VERIFICATION
+  // in Vercel to the content="..." value Search Console gives you, then redeploy.
+  ...(process.env.GOOGLE_SITE_VERIFICATION && {
+    verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
+  }),
+};
+
+// Who the business is, for Google's knowledge panel and brand searches.
+const organizationData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: siteConfig.brandName,
+      url: SITE_URL,
+      logo: `${SITE_URL}/brand/arivo-logo.png`,
+      ...(siteConfig.email && { email: siteConfig.email }),
+      sameAs: [siteConfig.socials.instagram].filter(Boolean),
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: siteConfig.brandName,
+      url: SITE_URL,
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      inLanguage: "en-IN",
+    },
+  ],
 };
 
 export default async function RootLayout({
@@ -69,6 +99,9 @@ export default async function RootLayout({
           <Footer />
           <CartDrawer />
         </CartProvider>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }} />
+        {/* Privacy-friendly page views (no cookies). Enable Web Analytics on the Vercel project to start collecting. */}
+        <Analytics />
       </body>
     </html>
   );

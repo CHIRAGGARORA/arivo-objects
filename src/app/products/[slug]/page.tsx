@@ -11,7 +11,8 @@ import { siteConfig } from "@/lib/siteConfig";
 import { CandleDetails } from "@/types/product";
 import { ProductReviews } from "@/components/reviews/ProductReviews";
 import { safely } from "@/lib/server/reviews";
-import { cachedApprovedReviews, cachedReviewSummary } from "@/lib/server/storefront";
+import { cachedApprovedReviews, cachedReviewSummary, soldOutVariantKeys } from "@/lib/server/storefront";
+import { sellableVariantKeys } from "@/lib/server/catalog";
 
 // Prebuilt and served from the cache; refreshed in the background at most
 // every 5 minutes, and straight after a sale, refund or review change.
@@ -42,27 +43,57 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   if (!product) notFound();
 
   const related = getRelatedProducts(product.slug);
-  const [reviews, summary] = await Promise.all([
+  const [reviews, summary, soldOut] = await Promise.all([
     safely(() => cachedApprovedReviews(product.slug, 20), []),
     safely(() => cachedReviewSummary(product.slug), { count: 0, average: 0 }),
+    soldOutVariantKeys(),
   ]);
   const details = product.details;
   const candle = isCandleDetails(details) ? details : null;
 
+  const inStock = sellableVariantKeys().some((k) => k.startsWith(`${product.slug}/`) && !soldOut.includes(k));
+  const productUrl = `${SITE_URL}/products/${product.slug}`;
+  const photos = [
+    ...new Set(product.variants.flatMap((v) => v.images.filter((i) => !i.isPlaceholder).map((i) => `${SITE_URL}${i.src}`))),
+  ];
+
+  // Everything Google needs for product rich results and free Shopping
+  // listings. Shipping and returns mirror /shipping-returns.
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.shortDescription,
+    sku: product.slug,
+    url: productUrl,
+    ...(photos.length > 0 && { image: photos }),
+    material: details.material,
     brand: { "@type": "Brand", name: siteConfig.brandName },
     offers: {
       "@type": "Offer",
-      url: `${SITE_URL}/products/${product.slug}`,
+      url: productUrl,
       priceCurrency: siteConfig.currency,
       price: product.price,
-      // Availability intentionally omitted: no live inventory system yet.
-      // Add "availability" (e.g. https://schema.org/InStock) once real
-      // stock tracking is connected.
+      itemCondition: "https://schema.org/NewCondition",
+      // Matches what the page shows: in stock while any sellable variant isn't sold out.
+      availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      seller: { "@id": `${SITE_URL}/#organization` },
+      ...(siteConfig.shippingFeeInr !== null && {
+        shippingDetails: {
+          "@type": "OfferShippingDetails",
+          shippingRate: { "@type": "MonetaryAmount", value: siteConfig.shippingFeeInr, currency: siteConfig.currency },
+          shippingDestination: { "@type": "DefinedRegion", addressCountry: "IN" },
+          deliveryTime: {
+            "@type": "ShippingDeliveryTime",
+            handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 2, unitCode: "DAY" },
+          },
+        },
+      }),
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "IN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      },
     },
     // Only real, approved verified-buyer reviews — omitted entirely when none exist.
     ...(summary.count > 0 && {
@@ -75,6 +106,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         datePublished: r.createdAt.slice(0, 10),
       })),
     }),
+  };
+
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_URL}/shop` },
+      { "@type": "ListItem", position: 3, name: product.name, item: productUrl },
+    ],
   };
 
   return (
@@ -182,6 +223,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
       />
     </div>
   );
